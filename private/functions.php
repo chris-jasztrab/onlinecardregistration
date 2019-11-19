@@ -1705,6 +1705,21 @@ function getWard($address) {
 
 }
 
+function getPatronWardByID($patronID) {
+  $patronAddress = getPatronAddress($patronID);
+  $wardResult = getWard($patronAddress);
+  if(!in_array($wardResult, array("WARD 1", "WARD 2", "WARD 3", "WARD 4"))) {
+    echo "Patron is outside of Milton";
+  }
+}
+
+function isPatronLocal($patronID) {
+  $patronWard = getPatronWardByID($patronID);
+  if($patronWard == 'Patron is outside of Milton') {
+    echo 'outsider';
+  }
+}
+
 function delLineFromFile($fileName, $lineNum){
  // check the file exists
    if(!is_writable($fileName))

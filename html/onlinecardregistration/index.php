@@ -205,7 +205,18 @@
 
 </div>
 
+<?php
+$files = glob("/var/www/html/onlinecardregistration/21387*");
+$now   = time();
+foreach ($files as $file) {
+    if (is_file($file)) {
+        if ($now - filemtime($file) >= 60 * 60 * 2) { // 2 hours
+            unlink($file);
+        }
+    }
+}
 
+?>
 
 <!-- /.MultiStep Form -->
 

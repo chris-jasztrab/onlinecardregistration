@@ -5,7 +5,8 @@
       <paths name="10.10.12.12">
         <serverdata>
           <mappings>
-            <mapping deploy="/var/www/" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/var/www/html/onlinecardregistration" local="$PROJECT_DIR$/html/onlinecardregistration" web="/" />
+            <mapping deploy="/var/www/private" local="$PROJECT_DIR$/private" />
           </mappings>
         </serverdata>
       </paths>

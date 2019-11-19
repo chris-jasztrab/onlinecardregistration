@@ -7,6 +7,8 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
+// TODO Implement code to check if patron is outside of Milton.  Do we want to generate a user account before or after?
+
  if (!is_post_request()) {
 header('Location: \MSF\index.php');
  }
@@ -73,7 +75,17 @@ if(isset($_POST['email']))
 //pre($newPatronInfo);
 //exit();
 //pre($_SESSION);
+     // TODO Need to check at this point if the patron is outside of Milton - before we create the patron
+
+     $ward = getWard($myAddress);
+
+     if(!in_array($ward,array("WARD 1", "WARD 2", "WARD 3", "WARD 4"))) {
+         header("Location: http://onlinecardregistration.mpl.on.ca/thanks.php");
+         die();
+     }
+
    $myNewPatron = createOnlinePatron($newPatronInfo);
+
    $patronPIN = $myNewPatron['pin'];
    $justpatronID = linkStripped($myNewPatron['patronIDString']);
    //echo 'patron id string that was created is: ' . $justpatronID;
