@@ -291,7 +291,7 @@ $(document).ready(function () {
    $("#msform").submit(function (e) {
 
        //disable the submit button
-       $("#btnSubmit").prop('disabled', true);
+       $("#btnSubmit").attr('disabled', true);
        $("#btnSubmit").css('opacity', '0.6');
        $("#btnSubmit").text('Adding Patron...');
        //console.log('testing');

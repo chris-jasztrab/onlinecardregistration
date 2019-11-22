@@ -1,128 +1,20 @@
 
 <?php
- include('../../private/initialize.php');
- include('../../private/PHPMailer.php');
- include('../../private/Exception.php');
+include('../../private/initialize.php');
+include('../../private/PHPMailer.php');
+include('../../private/Exception.php');
 //pre($_SESSION);
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// TODO Implement code to check if patron is outside of Milton.  Do we want to generate a user account before or after?
 
- if (!is_post_request()) {
-header('Location: \MSF\index.php');
- }
-
- if (is_post_request()) {
-
-if(isset($_POST['email']))
-  {
-      $post_email = $_POST['email'];
-      $post_name = strtoupper($_POST['lname']) . ', ' . strtoupper($_POST['fname']);
-      $post_street = strtoupper($_POST['street']);
-      $post_cityprovince = strtoupper($_POST['city']) . ', ' . strtoupper($_POST['province']);
-      $post_postalcode = strtoupper($_POST['postalcode']);
-      $post_phone = $_POST['phone'];
-      $post_bithdate = $_POST['date_of_birth_field'];
-      $post_homelibrary = $_POST['homelibrary'];
-      $post_pcode2 = $_POST['pcode2'];
-      $post_pcode3 = $_POST['pcode3'];
-      $post_city = strtoupper($_POST['city']);
-      $post_province = strtoupper($_POST['province']);
-      $post_notice = $_POST['notice_preference'];
-      $post_marketing = $_POST['marketing_preference'];
-
-  }
-  else {
-    $post_email = $_SESSION['email'];
-    $post_name = strtoupper($_SESSION['last_name']) . ', ' . strtoupper($_SESSION['first_name']);
-    $post_street = strtoupper($_SESSION['street']);
-    $post_cityprovince = strtoupper($_SESSION['city']) . ', ' . $_SESSION['province'];
-    $post_postalcode = strtoupper($_SESSION['postalcode']);
-    $post_phone = $_SESSION['phonenumber'];
-    $post_bithdate = $_SESSION['date_of_birth'];
-    $post_homelibrary = $_SESSION['homelibrary'];
-    $post_pcode2 = $_SESSION['pcode2'];
-    $post_pcode3 = $_SESSION['pcode3'];
-    $post_notice = $_SESSION['notice_preference'];
-    $post_marketing = $_SESSION['marketing_preference'];
-    $post_patrontype = $_SESSION['patron_type'];
-    $post_city = strtoupper($_SESSION['city']);
-    //$post_city =
-  }
-
-   $newPatronInfo = array(
-   'email'=>$post_email,
-   'name'=>$post_name,
-   'addressStreet'=>$post_street,
-   '$citycommaProvince'=>$post_cityprovince,
-   'postalCode'=>$post_postalcode,
-   'addressType'=>'a',
-   'phonenumber'=>$post_phone,
-   'numberType'=>'t',
-   'birthdate'=>$post_bithdate,
-   'homelibrary'=>$post_homelibrary);
-
-   $myAddress = [
-     'country' => 'CA',
-     'city' => $post_city,
-     'postalCode' => $post_postalcode,
-     'street' => $post_street];
-
-//echo $post_email;
-//pre($_SESSION);
-//pre($_POST);
-//pre($newPatronInfo);
-//exit();
-//pre($_SESSION);
-     // TODO Need to check at this point if the patron is outside of Milton - before we create the patron
-
-     $ward = getWard($myAddress);
-
-     if(!in_array($ward,array("WARD 1", "WARD 2", "WARD 3", "WARD 4"))) {
-         header("Location: http://onlinecardregistration.mpl.on.ca/thanks.php");
-         die();
-     }
-
-   $myNewPatron = createOnlinePatron($newPatronInfo);
-
-   $patronPIN = $myNewPatron['pin'];
-   $justpatronID = linkStripped($myNewPatron['patronIDString']);
-   //echo 'patron id string that was created is: ' . $justpatronID;
-   lb();
-   $allPatronDetails = getAllPatronDetails($justpatronID);
-   $pcode1value = updatePcode1Value($justpatronID, $myAddress);
-   if($pcode1value == '-') {
-     $addOutsideMiltonMessage = updatePatronAccountMessage($justpatronID, "Patron Address appears to be outside Milton - Check ID");
-   }
-   $pcode2value = updatePcode2Value($justpatronID, $_SESSION['pcode2']);
-   $pcode3value = updatePcode3Value($justpatronID, $_SESSION['pcode3']);
-   $updatePatronType = updatePatronType($justpatronID, '7');
-//   $updatePatronType = updatePatronType($justpatronID, $_SESSION['patron_type']);
-   $updateNoticePreference = updateNoticePreference($justpatronID, $post_notice);
-   if($post_marketing == 'y') {
-     $updateMarketingPreference = updatePatronNotes($justpatronID, 'MARKETING_PREFERENCE = TRUE');
-     }
-   $todaysDate = date('m/d/Y');
-   $addPatronCreateDate = updatePatronNotes($justpatronID, 'Created via OnlinePatronCreationForm v1 on ' . $todaysDate);
-   if(!empty($_SESSION['parentorguardian'])) {
-    updatePatronGuardian($justpatronID, $_SESSION['parentorguardian']);
-   }
- }
- //pre($allPatronDetails);
-   createLibraryCardImage($allPatronDetails['barcodes']['0']);
-   $libraryCardFile = $allPatronDetails['barcodes']['0'] . ".png";
-  ?>
-
- <center>
-      <H1>Here is your new e-Library Card!</H1>
-      <img src="<?php echo $libraryCardFile; ?>" alt="Library Card Image" img style="border:1px solid black">
-      <h3>Your PIN is: <?php echo $patronPIN; ?></h3>
- </center>
-
- <?php
 // CODE TO EMAIL PATRON A COPY OF THEIR CARD - NEED TO CHANGE THIS SO I ATTACH THEIR LIBRARY CARD AND THEN DISPLAY IT  - DONE IN HEADERS CID
-
+//$bodytext = '<center>';
+//$bodytext .= '<H1>Here is your new library card!</H1>';
+//$bodytext .= '<img src="cid:card.png">';
+//$bodytext .= '<p>';
+//$bodytext .= "Your PIN is: " . $patronPIN;
+//$bodytext .= '</center>';
 $bodytext = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:v="urn:schemas-microsoft-com:vml">
@@ -268,18 +160,16 @@ $bodytext = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "ht
 <!--[if mso]></td></tr></table><![endif]-->
 <div align="center" class="img-container center fixedwidth" style="padding-right: 20px;padding-left: 20px;">
 <!--[if mso]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr style="line-height:0px"><td style="padding-right: 20px;padding-left: 20px;" align="center"><![endif]-->
-<div style="font-size:1px;line-height:20px"> </div><img align="center" alt="Image" border="0" class="center fixedwidth" src="cid:patroncard.png" style="text-decoration: none; -ms-interpolation-mode: bicubic; border: 0; height: auto; width: 100%; max-width: 350px; display: block;" title="Image"/>
+<div style="font-size:1px;line-height:20px"> </div><img align="center" alt="Image" border="0" class="center fixedwidth" src="cid:ecard.png" style="text-decoration: none; -ms-interpolation-mode: bicubic; border: 0; height: auto; width: 100%; max-width: 450px; display: block;" title="Image"/>
 <p></p>
-
+<p style="line-height: 1.2; text-align: center; font-size: 22px; mso-line-height-alt: 26px; margin: 0;"><span style="font-size: 22px; color: #000000;"><span style="font-size: 22px;"><span style="font-size: 15px;">Click Image to Enlarge</span></span></span></p>
 <div style="font-size:1px;line-height:20px"> </div>
 <!--[if mso]></td></tr></table><![endif]-->
 </div>
 <!--[if mso]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding-right: 0px; padding-left: 0px; padding-top: 15px; padding-bottom: 0px; font-family: Arial, sans-serif"><![endif]-->
 <div style="color:#555555;font-family:Arial, \'Helvetica Neue\', Helvetica, sans-serif;line-height:1.2;padding-top:15px;padding-right:0px;padding-bottom:0px;padding-left:0px;">
 <div style="font-family: Arial, \'Helvetica Neue\', Helvetica, sans-serif; font-size: 12px; line-height: 1.2; color: #555555; mso-line-height-alt: 14px;">
-<p style="font-size: 22px; line-height: 1.2; text-align: center; mso-line-height-alt: 26px; margin: 0;"><span style="font-size: 22px; color: #000000;"><span style="font-size: 22px;">Your PIN is: ' . $patronPIN;
-
- $bodytext .= '</span></span></p>
+<p style="font-size: 22px; line-height: 1.2; text-align: center; mso-line-height-alt: 26px; margin: 0;"><span style="font-size: 22px; color: #000000;"><span style="font-size: 22px;">Your PIN is: XXXX</span></span></p>
 </div>
 </div>
 <!--[if mso]></td></tr></table><![endif]-->
@@ -770,31 +660,31 @@ $bodytext = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "ht
 </html>';
 
 
- $email = new PHPMailer();
- $email->IsHTML(true);
- $email->SetFrom('registration@mpl.on.ca', 'Milton Public Library'); //Name is optional
- $email->Subject   = 'Welcome to MPL';
- $email->Body      = $bodytext;
- $email->AddAddress($post_email);
 
- $file_to_attach = './' . $libraryCardFile;
+$email = new PHPMailer();
+$email->IsHTML(true);
+$email->SetFrom('registration@mpl.on.ca', 'Milton Public Library'); //Name is optional
+$email->Subject   = 'Welcome to MPL';
+$email->Body      = $bodytext;
+$email->AddAddress('chris.jasztrab@gmail.com');
+$email->AddAddress('chris.jasztrab@mpl.on.ca');
 
+//$file_to_attach = 'C:\\xampp\\htdocs\\sites\\onlinecardreg\\public\\' . $libraryCardFile;
 
- //$email->AddAttachment( $file_to_attach , '21387009002003.png' );
- $email->AddEmbeddedImage('./html_email/images/Background_1_4.png','Background_1_4.png');
- $email->AddEmbeddedImage('./html_email/images/iphone.png','iphone.png');
- //$email->AddEmbeddedImage('./html_email/images/ecard.png','ecard.png');
- $email->AddEmbeddedImage('./html_email/images/Bee.png','Bee.png');
- $email->AddEmbeddedImage('./html_email/images/Bee_2.png','Bee_2.png');
- $email->AddEmbeddedImage('./html_email/images/gale_comp.png','gale_comp.png');
- $email->AddEmbeddedImage('./html_email/images/mpl_logo.png','mpl_logo.png');
- $email->AddEmbeddedImage('./html_email/images/facebook.png','facebook.png');
- $email->AddEmbeddedImage('./html_email/images/twitter.png','twitter.png');
- $email->AddEmbeddedImage('./html_email/images/insta.png','insta.png');
- $email->AddEmbeddedImage($file_to_attach,'patroncard.png');
+//$email->AddAttachment( $file_to_attach , '21387009002003.png' );
+//$email->AddEmbeddedImage($libraryCardFile, 'card.png');
+$email->AddEmbeddedImage('./html_email/images/Background_1_4.png','Background_1_4.png');
+$email->AddEmbeddedImage('./html_email/images/iphone.png','iphone.png');
+$email->AddEmbeddedImage('./html_email/images/ecard.png','ecard.png');
+$email->AddEmbeddedImage('./html_email/images/Bee.png','Bee.png');
+$email->AddEmbeddedImage('./html_email/images/Bee_2.png','Bee_2.png');
+$email->AddEmbeddedImage('./html_email/images/gale_comp.png','gale_comp.png');
+$email->AddEmbeddedImage('./html_email/images/mpl_logo.png','mpl_logo.png');
+$email->AddEmbeddedImage('./html_email/images/facebook.png','facebook.png');
+$email->AddEmbeddedImage('./html_email/images/twitter.png','twitter.png');
+$email->AddEmbeddedImage('./html_email/images/insta.png','insta.png');
+$email->AddEmbeddedImage('./21387009002227.png','patroncard.png');
 
+return $email->Send();
 
-
- return $email->Send();
-
-  ?>
+?>

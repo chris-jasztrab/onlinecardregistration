@@ -22,11 +22,37 @@
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-formhelpers/2.3.0/css/bootstrap-formhelpers.min.css" rel="stylesheet">
     <link href="assets/multistepform/css/style.css" rel="stylesheet">
+    <script type="text/javascript" src='https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
+    <script type="text/javascript" src='https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.3/jquery.easing.min.js'></script>
 
+    <script type="text/javascript" src="assets/bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="assets/multistepform/js/msform.js"></script>
+    <script type="text/javascript" src="assets/multistepform/js/bootstrap-formhelpers-phone.js"></script>
+    <script type="text/javascript" src="assets/multistepform/js/bootstrap-formhelpers.js"></script>
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
     <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
     <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+
+<script>
+    $('#date_of_birth').bfhdatepicker({
+    icon:  'glyphicon glyphicon-calendar',
+    name: 'date_of_birth',
+    format: 'y-m-d',
+    input: 'datepick',
+    align: 'right'
+    });
+
+
+    $('#msform').on('keyup keypress', function(e) {
+    var keyCode = e.keyCode || e.which;
+    if (keyCode === 13) {
+    e.preventDefault();
+    return false;
+    }
+    });
+</script>
+
     <![endif]-->
 
 </head>
@@ -223,33 +249,11 @@ foreach ($files as $file) {
 <!-- Bootstrap core JavaScript
 ================================================== -->
 <!-- Placed at the end of the document so the pages load faster -->
-<script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
-<script src='http://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.3/jquery.easing.min.js'></script>
-<script>window.jQuery || document.write('<script src="../../assets/js/vendor/jquery.min.js"><\/script>')</script>
-<script src="assets/bootstrap/js/bootstrap.min.js"></script>
-<script src="assets/multistepform/js/msform.js"></script>
-<script src="assets/multistepform/js/bootstrap-formhelpers-phone.js"></script>
-<script src="assets/multistepform/js/bootstrap-formhelpers.js"></script>
+
 <!-- IE10 viewport hack for Surface/desktop Windows 8 buggy -->
 <!--<script src="../../assets/js/ie10-viewport-bug-workaround.js"></script>-->
 
 <script>
-$('#date_of_birth').bfhdatepicker({
-       icon:  'glyphicon glyphicon-calendar',
-       name: 'date_of_birth',
-       format: 'y-m-d',
-       input: 'datepick',
-       align: 'right'
-   });
-
-
-   $('#msform').on('keyup keypress', function(e) {
-  var keyCode = e.keyCode || e.which;
-  if (keyCode === 13) {
-    e.preventDefault();
-    return false;
-  }
-});
 
 
 </script>
