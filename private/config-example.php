@@ -1,5 +1,5 @@
 <?php
-
+// RENAME THIS FILE TO CONFIG.PHP
 
 define('captcha_site_key' , 'google-site-key from recaptcha admin console');
 
