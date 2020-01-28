@@ -2,6 +2,7 @@
 * bootstrap-formhelpers.js v2.3.0 by @vincentlamanna
 * Copyright 2018 Vincent Lamanna
 * http://www.apache.org/licenses/LICENSE-2.0
+ * CJ UPDATE
 */
 if (!jQuery) { throw new Error("Bootstrap Form Helpers requires jQuery"); }
 
@@ -14669,7 +14670,7 @@ var BFHTimezonesList = {
         '&nbsp;<a class="previousTen" href="#"><i class="glyphicon glyphicon-fast-backward"></i></a>&nbsp;&nbsp;' +
         '<a class="previous" href="#"><i class="glyphicon glyphicon-step-backward"></i></a>' +
         '<span></span>' +
-        '&nbsp;<a class="next" href="#"><i class="glyphicon glyphicon-forward"></i></a>&nbsp;&nbsp;' +
+        '&nbsp;<a class="next" href="#"><i class="glyphicon glyphicon-step-forward"></i></a>&nbsp;&nbsp;' +
         '<a class="nextTen" href="#"><i class="	glyphicon glyphicon-fast-forward"></i></a>' +
         '</th>' +
         '</tr>' +

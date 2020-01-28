@@ -9,5 +9,4 @@
   include('barcode39.php');
   setApiAccessToken();
   $errors = [];
-
   ?>

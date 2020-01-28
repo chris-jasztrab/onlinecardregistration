@@ -56,10 +56,11 @@ body {
     border-radius: 0px;
     /*margin-bottom: 10px;*/
     width: 100%;
+    height: 50px;
     box-sizing: border-box;
     font-family: montserrat;
     color: #2C3E50;
-    font-size: 13px;
+    font-size: 15px;
 }
 
 #msform input:focus, #msform textarea:focus {
@@ -81,7 +82,7 @@ body {
     font-weight: bold;
     color: white;
     border: 0 none;
-    border-radius: 25px;
+    border-radius: 8px;
     cursor: pointer;
     padding: 10px 5px;
     margin: 10px 5px;
@@ -93,7 +94,7 @@ body {
 
 #msform .action-button-previous {
     width: 100px;
-    background: #C5C5F1;
+    background: #C73E1D;
     font-weight: bold;
     color: white;
     border: 0 none;

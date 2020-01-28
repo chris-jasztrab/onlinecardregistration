@@ -1,33 +1,45 @@
 <?php
  include('../../private/initialize.php');
-//pre($_POST);
- if (is_post_request()) {
+ // ensure people can't just visit this page without having to solve the recaptcha first
+if(!isset($_SESSION['notabot'])) {
+    header('Location: \index.php');
+}
+
 $pcode2result = get_iii_pcode2();
 $pcode3result = get_iii_pcode3();
 $patrontypesresult = get_patron_types();
 $locationresult = get_branch_locations();
+$_SESSION['about_to_post'] = 'TRUE';
 
-$_SESSION['last_name'] = trim(strtoupper($_POST['last_name']));
-$_SESSION['first_name'] = trim(strtoupper($_POST['first_name']));
-//$_SESSION['dob_day'] = $_POST['dob_day'];
-//$_SESSION['dob_month'] = $_POST['dob_month'];
-//$_SESSION['dob_year'] = $_POST['dob_year'];
-//$dob = $_SESSION['date_of_birth'];
-$_SESSION['date_of_birth'] = $_POST['date_of_birth'];
-$_SESSION['street'] = trim(strtoupper($_POST['street']));
-$_SESSION['city'] = trim(strtoupper($_POST['city']));
-$_SESSION['province'] = strtoupper($_POST['province']);
-$_SESSION['postalcode'] = fixPostalCode(trim(strtoupper($_POST['postalcode'])));
-$_SESSION['phonenumber'] = $_POST['phone'];
-$_SESSION['email'] = trim($_POST['email']);
-$_SESSION['pcode2'] = $_POST['pcode2'];
-$_SESSION['pcode3'] = $_POST['pcode3'];
-$_SESSION['homelibrary'] = $_POST['homelibrary'];
-$_SESSION['marketing_preference'] = $_POST['marketing_preference'];
-$_SESSION['notice_preference'] = $_POST['notice_preference'];
+// check to see if a session variable exists first, if it doesn't them set it to the data posted from the form.php page
+// we do this because we use all session variables below to post the patron to the next page.  If there is an issue with their
+// applicaton we can auto fill in all the data back into the form from the session variables.
+if(!isset($_SESSION['last_name'])) $_SESSION['last_name'] = trim(strtoupper($_POST['last_name']));
+if(!isset($_SESSION['first_name'])) $_SESSION['first_name'] = trim(strtoupper($_POST['first_name']));
+if(!isset($_SESSION['dob_day'])) $_SESSION['dob_day'] = $_POST['dob_day'];
+if(!isset($_SESSION['dob_month'])) $_SESSION['dob_month'] = $_POST['dob_month'];
+if(!isset($_SESSION['dob_year'])) $_SESSION['dob_year'] = $_POST['dob_year'];
+if(!isset($_SESSION['date_of_birth'])) $_SESSION['date_of_birth'] = $_POST['date_of_birth'];
+
+if(!isset($_SESSION['street'])) $_SESSION['street'] = trim(strtoupper($_POST['street']));
+if(!isset($_SESSION['city'])) $_SESSION['city'] = trim(strtoupper($_POST['city']));
+if(!isset($_SESSION['province'])) $_SESSION['province'] = trim(strtoupper($_POST['province']));
+if(!isset($_SESSION['postalcode'])) $_SESSION['postalcode'] = fixPostalCode(trim(strtoupper($_POST['postalcode'])));
+if(!isset($_SESSION['phonenumber'])) $_SESSION['phonenumber'] = trim(strtoupper($_POST['phone']));
+if(!isset($_SESSION['email'])) $_SESSION['email'] = trim(($_POST['email']));
+
+if(!isset($_SESSION['pcode2'])) $_SESSION['pcode2'] = $_POST['pcode2'];
+if(!isset($_SESSION['pcode3'])) $_SESSION['pcode3'] = $_POST['pcode3'];
+if(!isset($_SESSION['homelibrary'])) $_SESSION['homelibrary'] = $_POST['homelibrary'];
+if(!isset($_SESSION['marketing_preference'])) $_SESSION['marketing_preference'] = $_POST['marketing_preference'];
+if(!isset($_SESSION['notice_preference'])) $_SESSION['notice_preference'] = $_POST['notice_preference'];
+
+//not using this yet.  Eventually we will have an option for parents to apply for kids cards by authenticating their card first.
 if(isset($_POST['parentorguardian'])) {
   $_SESSION['parentorguardian'] = $_POST['parentorguardian'];
 }
+
+// old code from the internal staff tools application
 if(isset($_POST['familycheck']))
 {
   $_SESSION['familycheck'] = 'on';
@@ -36,12 +48,15 @@ else {
   unset($_SESSION['familycheck']);
 }
 
+// we determine patron type by age.
 
+// attractive form below to show the patron the data they entered and give them an opportunity to correct it.
+// this form gets submitted to patronpostpatron.php yes i am not clever with my filenames.
 
 $patron_type = returnPatronTypeByBirthday($_SESSION['date_of_birth']);
 //echo 'patron type from function is: ' . $patron_type;
 $_SESSION['patron_type'] = $patron_type;
-
+//pre($_SESSION);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -59,7 +74,6 @@ $_SESSION['patron_type'] = $patron_type;
     <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
     <!--<link href="../../assets/css/ie10-viewport-bug-workaround.css" rel="stylesheet">-->
     <!-- Custom styles -->
-
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-formhelpers/2.3.0/css/bootstrap-formhelpers.min.css" rel="stylesheet">
     <link href="assets/multistepform/css/style.css" rel="stylesheet">
 
@@ -70,14 +84,25 @@ $_SESSION['patron_type'] = $patron_type;
     <![endif]-->
 
 </head>
+<style>
 
-<body background="background.jpg">
+    body {
+        background-image: url('images/ecardbackground.png');
+    }
+
+
+</style>
+<body>
 <!-- MultiStep Form -->
-<div class="row">
-    <div class="col-md-6 col-md-offset-3">
 
-        <form id="msform" action="patronpostpatron.php" method="post">
+    <div class="col-md-6 col-md-offset-3">
+        <form id="msform" action="patronpostpatron.php" method="POST">
+       <!-- <form id="msform" action="patronpostpatron.php" method="post"> -->
             <fieldset>
+                <?php if($_SESSION['addressissue'] == TRUE) { echo '<h1 class="fs-title" style="color:red">There was an error verifying your address - Please correct it and try submitting again</h1>';
+                unset($_SESSION['addressissue']);
+                }
+                ?>
                <h1 class="fs-title">Please Confirm Your Personal Details</h1>
                 <!--<button type="button" id="edit_button" value="disable/enable"  class="btn btn-link"><span class="glyphicon glyphicon-edit"></span>&nbsp;&nbsp;Edit</button>-->
                 <!--<h2 class="fs-title">Personal Details</h2>-->
@@ -154,7 +179,7 @@ $_SESSION['patron_type'] = $patron_type;
                 <h2 class="fs-title">Contact Information</h2>
 
                 <div class="form_labels">Email Address</div>
-                <input type="email" name="email" id="email" placeholder="" style="margin-bottom: 10px" value="<?php echo $_SESSION['email'];?>"/>
+                <input type="email" name="email" id="email" placeholder="" style="margin-bottom: 10px" value="<?php echo $_SESSION['email'];?>" required/>
 
 
                 <div class="form_labels">Phone Number</div>
@@ -177,7 +202,7 @@ $_SESSION['patron_type'] = $patron_type;
 
                 <h2 class="fs-title">The Other Stuff</h2>
                 <div class="form-group">
-                <div class="form_labels">Can we send you newsletters?</div>
+                <div class="form_labels">Can we send you newsletters to keep you up-to-date on exciting upcoming events, programs and resources?</div>
 
                 <select class="form-control input-small" name="marketing_preference" style="height: 50px" id="marketing_preference" style="margin-bottom: 10px" required>
                    <option value="y"<?php
@@ -240,6 +265,7 @@ $_SESSION['patron_type'] = $patron_type;
                     </select>
 
                  </div>
+
                  <button type="submit" id="btnSubmit" class="submit action-button">Submit</button>
 
 
@@ -256,7 +282,7 @@ $_SESSION['patron_type'] = $patron_type;
 
     </div>
 
-</div>
+
 
 
 <!-- /.MultiStep Form -->
@@ -264,8 +290,8 @@ $_SESSION['patron_type'] = $patron_type;
 <!-- Bootstrap core JavaScript
 ================================================== -->
 <!-- Placed at the end of the document so the pages load faster -->
-<script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
-<script src='http://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.3/jquery.easing.min.js'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.3/jquery.easing.min.js'></script>
 <script>window.jQuery || document.write('<script src="../../assets/js/vendor/jquery.min.js"><\/script>')</script>
 <script src="assets/bootstrap/js/bootstrap.min.js"></script>
 <script src="assets/multistepform/js/msform.js"></script>
@@ -276,27 +302,29 @@ $_SESSION['patron_type'] = $patron_type;
 
 <script>
 
-
-
-$('#date_of_birth').bfhdatepicker({
-       icon:  'glyphicon glyphicon-calendar',
-       name: 'date_of_birth',
-       format: 'y/m/d',
-       input: 'datepick',
-       align: 'right'
-   });
-
 $(document).ready(function () {
 
-   $("#msform").submit(function (e) {
+        $("#msform").submit(function (e) {
 
-       //disable the submit button
-       $("#btnSubmit").attr('disabled', true);
-       $("#btnSubmit").css('opacity', '0.6');
-       $("#btnSubmit").text('Adding Patron...');
-       //console.log('testing');
-       return true;
+            //disable the submit button
+            $("#btnSubmit").prop("disabled", true);
+            $("#btnSubmit").css('opacity', '0.6');
+            $("#btnSubmit").text('Processing...');
+            $("#btnSubmit").prop("disabled", true);
+            console.log('testing');
+            return true;
+        });
+
+
+    $('#date_of_birth').bfhdatepicker({
+        icon:  'glyphicon glyphicon-calendar',
+        name: 'date_of_birth',
+        format: 'y/m/d',
+        input: 'datepick',
+        align: 'right'
     });
+
+
 });
 
 
@@ -305,6 +333,4 @@ $(document).ready(function () {
 </body>
 </html>
 
-<?php
 
-} ?>

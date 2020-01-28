@@ -3,127 +3,231 @@
  include('../../private/initialize.php');
  include('../../private/PHPMailer.php');
  include('../../private/Exception.php');
+ // pull in the usual libraries, also pull in PHPMailer. You are free to re-write the code to use a different mail function
+// we went with this one because it is easy to use, and does all the legwork.
 //pre($_SESSION);
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// TODO Implement code to check if patron is outside of Milton.  Do we want to generate a user account before or after?
+// again check to ensure people aren't going right to this page
+if(!isset($_SESSION['notabot'])) {
+    header('Location: \index.php');
+}
+
+// check if it's a post request, this page should only ever get post requests, if not kick them back to the start
+
+// get all the POST details and do some formatting.  We like all uppercase in our patron records for instance.  This helps
+// keep patron records consistant.
 
  if (!is_post_request()) {
-header('Location: \MSF\index.php');
+header('Location: \index.php');
  }
 
- if (is_post_request()) {
+ if($_SESSION['about_to_post'] != 'TRUE') {
+     header('Location: \index.php');
+ }
 
-if(isset($_POST['email']))
-  {
-      $post_email = $_POST['email'];
-      $post_name = strtoupper($_POST['lname']) . ', ' . strtoupper($_POST['fname']);
-      $post_street = strtoupper($_POST['street']);
-      $post_cityprovince = strtoupper($_POST['city']) . ', ' . strtoupper($_POST['province']);
-      $post_postalcode = strtoupper($_POST['postalcode']);
-      $post_phone = $_POST['phone'];
-      $post_bithdate = $_POST['date_of_birth_field'];
-      $post_homelibrary = $_POST['homelibrary'];
-      $post_pcode2 = $_POST['pcode2'];
-      $post_pcode3 = $_POST['pcode3'];
-      $post_city = strtoupper($_POST['city']);
-      $post_province = strtoupper($_POST['province']);
-      $post_notice = $_POST['notice_preference'];
-      $post_marketing = $_POST['marketing_preference'];
+ if($_SESSION['about_to_post'] == 'TRUE') {
 
-  }
-  else {
-    $post_email = $_SESSION['email'];
-    $post_name = strtoupper($_SESSION['last_name']) . ', ' . strtoupper($_SESSION['first_name']);
-    $post_street = strtoupper($_SESSION['street']);
-    $post_cityprovince = strtoupper($_SESSION['city']) . ', ' . $_SESSION['province'];
-    $post_postalcode = strtoupper($_SESSION['postalcode']);
-    $post_phone = $_SESSION['phonenumber'];
-    $post_bithdate = $_SESSION['date_of_birth'];
-    $post_homelibrary = $_SESSION['homelibrary'];
-    $post_pcode2 = $_SESSION['pcode2'];
-    $post_pcode3 = $_SESSION['pcode3'];
-    $post_notice = $_SESSION['notice_preference'];
-    $post_marketing = $_SESSION['marketing_preference'];
-    $post_patrontype = $_SESSION['patron_type'];
-    $post_city = strtoupper($_SESSION['city']);
-    //$post_city =
-  }
 
-   $newPatronInfo = array(
-   'email'=>$post_email,
-   'name'=>$post_name,
-   'addressStreet'=>$post_street,
-   '$citycommaProvince'=>$post_cityprovince,
-   'postalCode'=>$post_postalcode,
-   'addressType'=>'a',
-   'phonenumber'=>$post_phone,
-   'numberType'=>'t',
-   'birthdate'=>$post_bithdate,
-   'homelibrary'=>$post_homelibrary);
+     if (is_post_request()) {
 
-   $myAddress = [
-     'country' => 'CA',
-     'city' => $post_city,
-     'postalCode' => $post_postalcode,
-     'street' => $post_street];
+        $_SESSION['about_to_post'] = 'NULL';
+        if(isset($_POST['email']))
+          {
 
-//echo $post_email;
-//pre($_SESSION);
-//pre($_POST);
-//pre($newPatronInfo);
-//exit();
-//pre($_SESSION);
-     // TODO Need to check at this point if the patron is outside of Milton - before we create the patron
+              $post_email = $_POST['email'];
+              $post_name = strtoupper($_POST['lname']) . ', ' . strtoupper($_POST['fname']);
+              $post_street = strtoupper($_POST['street']);
+              $post_cityprovince = strtoupper($_POST['city']) . ', ' . strtoupper($_POST['province']);
+              $post_postalcode = strtoupper($_POST['postalcode']);
+              $post_phone = $_POST['phone'];
+              $post_bithdate = $_POST['date_of_birth_field'];
+              $post_homelibrary = $_POST['homelibrary'];
+              $post_pcode2 = $_POST['pcode2'];
+              $post_pcode3 = $_POST['pcode3'];
+              $post_city = strtoupper($_POST['city']);
+              $post_province = strtoupper($_POST['province']);
+              $post_notice = $_POST['notice_preference'];
+              $post_marketing = $_POST['marketing_preference'];
 
-     $ward = getWard($myAddress);
+                // write the data to a session varibale, we might have to kick them back to the verify page and this will auto fill the data back in for them.
+              $_SESSION['email'] = $_POST['email'];
+              $_SESSION['first_name'] = strtoupper($_POST['fname']);
+              $_SESSION['last_name'] = strtoupper($_POST['lname']);
+              $_SESSION['name'] = strtoupper($_SESSION['last_name']) . ', ' . strtoupper($_SESSION['first_name']);
+              $_SESSION['street'] = strtoupper($_POST['street']);
+              $_SESSION['city'] = strtoupper($_POST['city']);
+              $_SESSION['postalcode'] = strtoupper($_POST['postalcode']);
+              $_SESSION['province'] = strtoupper($_POST['province']);
+              $_SESSION['phonenumber'] = strtoupper($_POST['phone']);
+              $_SESSION['date_of_birth'] = $_POST['date_of_birth_field'];
+              $_SESSION['homelibrary'] = $_POST['homelibrary'];
+              $_SESSION['pcode2'] = $_POST['pcode2'];
+              $_SESSION['pcode3'] = $_POST['pcode3'];
+              $_SESSION['notice_preference'] = $_POST['notice_preference'];
+              $_SESSION[',marketing_preference'] = $_POST['marketing_preference'];
+          }
 
-     if(!in_array($ward,array("WARD 1", "WARD 2", "WARD 3", "WARD 4"))) {
-         header("Location: http://onlinecardregistration.mpl.on.ca/thanks.php");
-         die();
+      else {
+        $post_email = $_SESSION['email'];
+        $post_name = strtoupper($_SESSION['last_name']) . ', ' . strtoupper($_SESSION['first_name']);
+        $post_street = strtoupper($_SESSION['street']);
+        $post_cityprovince = strtoupper($_SESSION['city']) . ', ' . $_SESSION['province'];
+        $post_postalcode = strtoupper($_SESSION['postalcode']);
+        $post_phone = $_SESSION['phonenumber'];
+        $post_bithdate = $_SESSION['date_of_birth'];
+        $post_homelibrary = $_SESSION['homelibrary'];
+        $post_pcode2 = $_SESSION['pcode2'];
+        $post_pcode3 = $_SESSION['pcode3'];
+        $post_notice = $_SESSION['notice_preference'];
+        $post_marketing = $_SESSION['marketing_preference'];
+        $post_patrontype = $_SESSION['patron_type'];
+        $post_city = strtoupper($_SESSION['city']);
+        //$post_city =
+      }
+        // create an array of all the POST info that we will pass to a function that will add the patron to the ILS
+       $newPatronInfo = array(
+       'email'=>$post_email,
+       'name'=>$post_name,
+       'addressStreet'=>$post_street,
+       '$citycommaProvince'=>$post_cityprovince,
+       'postalCode'=>$post_postalcode,
+       'addressType'=>'a',
+       'phonenumber'=>$post_phone,
+       'numberType'=>'t',
+       'birthdate'=>$post_bithdate,
+       'homelibrary'=>$post_homelibrary);
+
+        // get their address into its own array - we will pass this to a function to do address verificaton.
+       $myAddress = [
+         'country' => 'CA',
+         'city' => $post_city,
+         'postalCode' => $post_postalcode,
+         'street' => $post_street];
+
+       // leftover testing code.
+    //echo $post_email;
+    //pre($_SESSION);
+    //pre($_POST);
+    //pre($newPatronInfo);
+    //exit();
+    //pre($_SESSION);
+
+         // Milton is split into wards, in the config file there are GPS lat and long coordinates that define the wards.
+         // if you aren't in one of those wards then you are are not eligible for a MPL library card.  Bring them to a page that says this.
+         $ward = getWard($myAddress);
+         if(!in_array($ward,array("WARD 1", "WARD 2", "WARD 3", "WARD 4")))
+         {
+             header('Location: \notinmilton.php');
+             die();
+         }
+         // check to see that the address is valid.  This is done using Bing Maps API.  They give API access to public libraries / nonprofit for free
+         // the function checks to see that the postal code actually matches the address supplied. If not, send them back to the page and ask them to correct it.
+         $addressCheck  = isAddressValid($myAddress);
+         if(!$addressCheck) {
+            $_SESSION['addressissue'] = TRUE;
+             header('Location: \verifynewpatron.php');
+             die();
+         }
+
+
+         //$residenceCheck = isPrivateResidence($myaddress);
+         //if (!$busresult) {
+         //    header('Location: \notahouse.php');
+         //    die();
+         //}
+
+        // All checks have been passed so go ahead and create the patron.  Part of the process of creating the patron it to create
+         // a random 6 digit pin.  The ILS has some (in my opinion stupid) checks to ensure the pin is non-trivial, so 1111 is not valid.
+         // the function makes a random pin with non-repeating numbers.
+
+         $myNewPatron = createOnlinePatron($newPatronInfo);
+        // get the pin from the patron record to display to the user
+       $patronPIN = $myNewPatron['pin'];
+       // get the patronID from the record so we can get all the details.
+       $justpatronID = linkStripped($myNewPatron['patronIDString']);
+       //echo 'patron id string that was created is: ' . $justpatronID;
+       lb();
+       $allPatronDetails = getAllPatronDetails($justpatronID);
+       // legacy code
+       $pcode1value = updatePcode1Value($justpatronID, $myAddress);
+       if($pcode1value == '-') {
+         $addOutsideMiltonMessage = updatePatronAccountMessage($justpatronID, "Patron Address appears to be outside Milton - Check ID");
+       }
+       // update the pcode values because this can't be done at the time of patron creation.
+       $pcode2value = updatePcode2Value($justpatronID, $_SESSION['pcode2']);
+       $pcode3value = updatePcode3Value($justpatronID, $_SESSION['pcode3']);
+       // update the patron type to be 'Online-only'  we created this patron type in the ILS to have no access to physical resources.
+       $updatePatronType = updatePatronType($justpatronID, '7');
+       // update how they want notifications
+       $updateNoticePreference = updateNoticePreference($justpatronID, $post_notice);
+       // update their marketing preferences, we just use a patron note for this.
+       if($post_marketing == 'y') {
+         $updateMarketingPreference = updatePatronNotes($justpatronID, 'MARKETING_PREFERENCE = TRUE');
+         }
+       $todaysDate = date('m/d/Y');
+       // add a patron note saying that the record was created using the online tool.
+       $addPatronCreateDate = updatePatronNotes($justpatronID, 'Created via OnlinePatronCreationForm v1 on ' . $todaysDate);
+       if(!empty($_SESSION['parentorguardian'])) {
+        updatePatronGuardian($justpatronID, $_SESSION['parentorguardian']);
+       }
      }
-
-   $myNewPatron = createOnlinePatron($newPatronInfo);
-
-   $patronPIN = $myNewPatron['pin'];
-   $justpatronID = linkStripped($myNewPatron['patronIDString']);
-   //echo 'patron id string that was created is: ' . $justpatronID;
-   lb();
-   $allPatronDetails = getAllPatronDetails($justpatronID);
-   $pcode1value = updatePcode1Value($justpatronID, $myAddress);
-   if($pcode1value == '-') {
-     $addOutsideMiltonMessage = updatePatronAccountMessage($justpatronID, "Patron Address appears to be outside Milton - Check ID");
-   }
-   $pcode2value = updatePcode2Value($justpatronID, $_SESSION['pcode2']);
-   $pcode3value = updatePcode3Value($justpatronID, $_SESSION['pcode3']);
-   $updatePatronType = updatePatronType($justpatronID, '7');
-//   $updatePatronType = updatePatronType($justpatronID, $_SESSION['patron_type']);
-   $updateNoticePreference = updateNoticePreference($justpatronID, $post_notice);
-   if($post_marketing == 'y') {
-     $updateMarketingPreference = updatePatronNotes($justpatronID, 'MARKETING_PREFERENCE = TRUE');
-     }
-   $todaysDate = date('m/d/Y');
-   $addPatronCreateDate = updatePatronNotes($justpatronID, 'Created via OnlinePatronCreationForm v1 on ' . $todaysDate);
-   if(!empty($_SESSION['parentorguardian'])) {
-    updatePatronGuardian($justpatronID, $_SESSION['parentorguardian']);
-   }
  }
  //pre($allPatronDetails);
+    // Code to create the library card image.  It takes a static image (the background of the library card) and superimposes a barcode ontop of it.
+
+
+// the code below shows the image to the user on the screen and also emails them a copy of the card and our welcome email.
    createLibraryCardImage($allPatronDetails['barcodes']['0']);
    $libraryCardFile = $allPatronDetails['barcodes']['0'] . ".png";
   ?>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <!--<link rel="icon" href="../../favicon.ico">-->
+    <title>MPL Online Card Registration</title>
+    <!-- Bootstrap core CSS -->
+    <link href="assets/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <!--<link href="../../assets/css/ie10-viewport-bug-workaround.css" rel="stylesheet">-->
+    <!-- Custom styles -->
+
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-formhelpers/2.3.0/css/bootstrap-formhelpers.min.css" rel="stylesheet">
+    <link href="assets/multistepform/css/style.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]-->
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="https://www.google.com/recaptcha/api.js?render=<?php echo captcha_site_key; ?>"></script>
+</head>
+
+<body background="images/ecardbackground.png">
 
  <center>
-      <H1>Here is your new e-Library Card!</H1>
-      <img src="<?php echo $libraryCardFile; ?>" alt="Library Card Image" img style="border:1px solid black">
-      <h3>Your PIN is: <?php echo $patronPIN; ?></h3>
+     <div class="imgbox">
+         <H1>Here is your new e-Library Card!</H1>
+          <img src="<?php echo $libraryCardFile; ?>" class="center-fit" alt="Library Card Image" img style="border:1px solid black">
+          <h3>Your PIN is: <?php echo $patronPIN; ?></h3>
+         <br/>
+         <h3>Check your email or further details and a copy of your e-card</h3>
+     </div>
  </center>
-
+</body>
+</html>
  <?php
 // CODE TO EMAIL PATRON A COPY OF THEIR CARD - NEED TO CHANGE THIS SO I ATTACH THEIR LIBRARY CARD AND THEN DISPLAY IT  - DONE IN HEADERS CID
 
-$bodytext = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+ $bodytext = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:v="urn:schemas-microsoft-com:vml">
 <head>
@@ -239,13 +343,13 @@ $bodytext = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "ht
 		}
 	</style>
 </head>
-<body class="clean-body" style="margin: 0; padding: 0; -webkit-text-size-adjust: 100%; background-color: #dbb727;">
+<body class="clean-body" style="margin: 0; padding: 0; -webkit-text-size-adjust: 100%; background-color: #aed0c7;"> <!-- was  #dbb727 -->
 <!--[if IE]><div class="ie-browser"><![endif]-->
-<table bgcolor="#dbb727" cellpadding="0" cellspacing="0" class="nl-container" role="presentation" style="table-layout: fixed; vertical-align: top; min-width: 320px; Margin: 0 auto; border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #dbb727; width: 100%;" valign="top" width="100%">
+<table bgcolor="#aed0c7" cellpadding="0" cellspacing="0" class="nl-container" role="presentation" style="table-layout: fixed; vertical-align: top; min-width: 320px; Margin: 0 auto; border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #aed0c7; width: 100%;" valign="top" width="100%">
 <tbody>
 <tr style="vertical-align: top;" valign="top">
 <td style="word-break: break-word; vertical-align: top;" valign="top">
-<!--[if (mso)|(IE)]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="background-color:#dbb727"><![endif]-->
+<!--[if (mso)|(IE)]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="background-color:#aed0c7"><![endif]-->
 <div style="background-image:url(\'cid:Background_1_4.png\');background-position:top center;background-repeat:no-repeat;background-color:#e9e4d4;">
 <div class="block-grid no-stack" style="Margin: 0 auto; min-width: 320px; max-width: 640px; overflow-wrap: break-word; word-wrap: break-word; word-break: break-word; background-color: transparent;">
 <div style="border-collapse: collapse;display: table;width: 100%;background-color:transparent;">
@@ -772,8 +876,8 @@ $bodytext = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "ht
 
  $email = new PHPMailer();
  $email->IsHTML(true);
- $email->SetFrom('registration@mpl.on.ca', 'Milton Public Library'); //Name is optional
- $email->Subject   = 'Welcome to MPL';
+ $email->SetFrom('registration@beinspiredatmpl.ca', 'Milton Public Library'); //Name is optional
+ $email->Subject   = 'Welcome to MPL!';
  $email->Body      = $bodytext;
  $email->AddAddress($post_email);
 

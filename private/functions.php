@@ -286,6 +286,66 @@ function findPatronIDByBarcode($barcode) {
 
 }
 
+function findPatronIDByEmail($email) {
+  $uri = 'https://';
+  $uri .= appServer;
+  $uri .= ':443/iii/sierra-api/v';
+  $uri .= apiVer;
+  $uri .= '/patrons/query';
+  $uri .= '?offset=0';
+  $uri .= '&limit=10';
+  //echo $uri;
+  $query_string = '{
+  "target":
+  {
+      "record": {
+        "type": "patron"
+      },
+      "field": {
+        "tag": "z"
+      }
+    },
+    "expr": {
+      "op": "has",
+      "operands": [
+      "' . $email . '",
+        ""
+      ]
+    }
+  }';
+
+  //echo " query string is " . $query_string . " ";
+  //setup the API access token
+  setApiAccessToken();
+
+  //get the access token we just created
+  $apiToken = getCurrentApiAccessToken();
+  //echo " this is the API token " . $apiToken . " ";
+
+  //build the headers that we are going to use to post our json to the api
+  $headers = array(
+      "Authorization: Bearer " . $apiToken,
+      "Content-Type:  application/json");
+
+  //use the headers, url, and json string to query the api
+  $ch = curl_init();
+  curl_setopt($ch, CURLOPT_URL, $uri);
+  curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+  curl_setopt($ch, CURLOPT_POST, 1);
+  curl_setopt($ch, CURLOPT_POSTFIELDS, $query_string);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+  //get the result from our json api query
+  $result = curl_exec($ch);
+
+  $patronIDArray = json_decode($result, true);
+  return $patronIDArray;
+  //$patronLink = $patronIDArray["entries"]["0"]["link"];
+  //$patronLink = stripped($patronLink);
+  //return $patronLink;
+}
+
+
 // NOT DONE!! get overdue patron items
 function getPatronOverdueItems($patronID) {
   $uri = 'https://';
@@ -1451,6 +1511,36 @@ function geocodeAddress($address) {
   $result = (curl_exec($ch));
   curl_close($ch);
   return $result;
+}
+
+function isPrivateResidence($address) {
+  // returns an array of lat long points for given address.
+  $latlong = getLatLong($address);
+  //pre($latlong);
+  $uri = 'http://dev.virtualearth.net/REST/v1/locationrecog/';
+  $uri .= $latlong[0] . ',';
+  $uri .= $latlong[1];
+  $uri .= '?radius=.001';
+  $uri .= '&o=json&key=' . bingMapsKey;
+  //  echo $uri;
+  $formatted_uri = str_ireplace(" ","%20",$uri);
+  // make the request
+  $ch = curl_init();
+  curl_setopt($ch, CURLOPT_URL, $formatted_uri);
+  curl_setopt($ch, CURLOPT_HTTPGET, 1);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+  $result = (curl_exec($ch));
+  curl_close($ch);
+  $jcode = json_decode($result, true);
+  $isresidence = $jcode['resourceSets']['0']['resources']['0']['isPrivateResidence'];
+
+  if($isresidence == 'True') {
+    return true;
+  }
+  elseif ($isresidence == 'False') {
+    return false;
+  }
+
 }
 
 function getLatLong($address) {
@@ -2950,5 +3040,216 @@ function createLibraryCardImage($nextbarcode) {
   imagedestroy($src);
 
 }
+
+function delete_oldfiles($dir,$secs,$pattern = "/*")
+{
+  //delete files in folder based on path and patterns
+  $now = time();
+  foreach(glob("$dir$pattern") as $f) {
+    if (is_file($f) && ($now - filemtime($f) > $secs)) unlink($f);
+  }
+}
+
+function isAddressValid($address) {
+  // check to see if the address that the patron provided is valid.  Specifically does the postal code match the address
+  $formattedAddress = getFormattedAddress($address);
+  $providedPostalCode = $address['postalCode'];
+  $geoPostalcode = getPostalCode($address);
+  //echo 'Provided Postal Code is: ' . $providedPostalCode;
+  //echo 'GeoCoded Postal Code is: ' . $geoPostalcode;
+  if(str_replace(' ', '', $providedPostalCode) == str_replace(' ', '', $geoPostalcode)) {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+
+function setUpakneeApiAccessToken() {
+  $uri = 'https://rest.upaknee.com';
+  $authCredentials = base64_encode(apiKey . ":" . apiSecret);
+
+  // Build the header
+  $headers = array(
+      "Authorization: Basic " . $authCredentials,
+      "Content-Type: application/x-www-form-urlencoded");
+  // make the request
+  $ch = curl_init();
+  curl_setopt($ch, CURLOPT_URL, $uri);
+  curl_setopt($ch, CURLOPT_POST, 1);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+  curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+  curl_setopt($ch, CURLOPT_POSTFIELDS, 'grant_type=client_credentials');
+  $result = json_decode(curl_exec($ch));
+  curl_close($ch);
+  // save the access token and creation time to a session variable
+  $_SESSION['apiAccessToken'] = $result->access_token;
+  $_SESSION['apiAccessTokenCreationDate'] = time();
+}
+
+function getNumberOfOnlineRegistrations() {
+  $uri = 'https://';
+  $uri .= appServer;
+  $uri .= ':443/iii/sierra-api/v';
+  $uri .= apiVer;
+  $uri .= '/patrons/query';
+  $uri .= '?offset=0';
+  $uri .= '&limit=100000';
+  //echo $uri;
+  $query_string = '{
+    "target": {
+      "record": {
+        "type": "patron"
+      },
+      "field": {
+        "tag": "x"
+      }
+    },
+    "expr": {
+      "op": "has",
+      "operands": [
+        "Created via OnlinePatronCreationForm v1",
+        ""
+      ]
+    }
+  }';
+  //echo " query string is " . $query_string . " ";
+  //setup the API access token
+  setApiAccessToken();
+
+  //get the access token we just created
+  $apiToken = getCurrentApiAccessToken();
+  //echo " this is the API token " . $apiToken . " ";
+
+  //build the headers that we are going to use to post our json to the api
+  $headers = array(
+      "Authorization: Bearer " . $apiToken,
+      "Content-Type:  application/json");
+
+  //use the headers, url, and json string to query the api
+  $ch = curl_init();
+  curl_setopt($ch, CURLOPT_URL, $uri);
+  curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+  curl_setopt($ch, CURLOPT_POST, 1);
+  curl_setopt($ch, CURLOPT_POSTFIELDS, $query_string);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+  //get the result from our json api query
+  $result = curl_exec($ch);
+  $jcode = json_decode($result, true);
+  return $jcode['total'];
+
+}
+
+function getNumberOfMarketingTargets() {
+  $uri = 'https://';
+  $uri .= appServer;
+  $uri .= ':443/iii/sierra-api/v';
+  $uri .= apiVer;
+  $uri .= '/patrons/query';
+  $uri .= '?offset=0';
+  $uri .= '&limit=100000';
+  //echo $uri;
+  $query_string = '{
+    "target": {
+      "record": {
+        "type": "patron"
+      },
+      "field": {
+        "tag": "x"
+      }
+    },
+    "expr": {
+      "op": "equals",
+      "operands": [
+        "MARKETING_PREFERENCE = TRUE",
+        ""
+      ]
+    }
+  }';
+  //echo " query string is " . $query_string . " ";
+  //setup the API access token
+  setApiAccessToken();
+
+  //get the access token we just created
+  $apiToken = getCurrentApiAccessToken();
+  //echo " this is the API token " . $apiToken . " ";
+
+  //build the headers that we are going to use to post our json to the api
+  $headers = array(
+      "Authorization: Bearer " . $apiToken,
+      "Content-Type:  application/json");
+
+  //use the headers, url, and json string to query the api
+  $ch = curl_init();
+  curl_setopt($ch, CURLOPT_URL, $uri);
+  curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+  curl_setopt($ch, CURLOPT_POST, 1);
+  curl_setopt($ch, CURLOPT_POSTFIELDS, $query_string);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+  //get the result from our json api query
+  $result = curl_exec($ch);
+  $jcode = json_decode($result, true);
+  return $jcode['total'];
+
+}
+
+
+function getOnlineRegistrations() {
+  $uri = 'https://';
+  $uri .= appServer;
+  $uri .= ':443/iii/sierra-api/v';
+  $uri .= apiVer;
+  $uri .= '/patrons/query';
+  $uri .= '?offset=0';
+  $uri .= '&limit=100000';
+  //echo $uri;
+  $query_string = '{
+    "target": {
+      "record": {
+        "type": "patron"
+      },
+      "field": {
+        "tag": "x"
+      }
+    },
+    "expr": {
+      "op": "has",
+      "operands": [
+        "Created via OnlinePatronCreationForm v1",
+        ""
+      ]
+    }
+  }';
+  //echo " query string is " . $query_string . " ";
+  //setup the API access token
+  setApiAccessToken();
+
+  //get the access token we just created
+  $apiToken = getCurrentApiAccessToken();
+  //echo " this is the API token " . $apiToken . " ";
+
+  //build the headers that we are going to use to post our json to the api
+  $headers = array(
+      "Authorization: Bearer " . $apiToken,
+      "Content-Type:  application/json");
+
+  //use the headers, url, and json string to query the api
+  $ch = curl_init();
+  curl_setopt($ch, CURLOPT_URL, $uri);
+  curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+  curl_setopt($ch, CURLOPT_POST, 1);
+  curl_setopt($ch, CURLOPT_POSTFIELDS, $query_string);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+  //get the result from our json api query
+  $result = curl_exec($ch);
+  $jcode = json_decode($result, true);
+  return $jcode;
+
+}
+
 
 ?>
