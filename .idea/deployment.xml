@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="10.10.12.12" preserveTimestamps="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="EXTERNAL_PROD" preserveTimestamps="false">
     <serverData>
-      <paths name="10.10.12.12">
+      <paths name="EXTERNAL_PROD">
         <serverdata>
           <mappings>
-            <mapping deploy="/var/www/html/onlinecardregistration" local="$PROJECT_DIR$/html/onlinecardregistration" web="/" />
-            <mapping deploy="/var/www/private" local="$PROJECT_DIR$/private" />
-            <mapping deploy="/var/www/html/html_email" local="$PROJECT_DIR$/html/html_email" />
+            <mapping deploy="/var/www/html/onlinecardregistration/html" local="$PROJECT_DIR$/html/onlinecardregistration" web="/" />
+            <mapping deploy="/var/www/html/private" local="$PROJECT_DIR$/private" />
+            <mapping deploy="/var/www/html/onlinecardregistration/html/html_email" local="$PROJECT_DIR$/html/html_email" />
           </mappings>
         </serverdata>
       </paths>

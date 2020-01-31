@@ -27,6 +27,7 @@ include('../../private/initialize.php');
 
 <?php
 if($_GET['secretphrase'] == 'ShowTheStats') {
+    $_SESSION['isAdmin'] = 'TRUE';
 lb();
 echo 'Number of people who have renewed online: ' . getNumberOfOnlineRenewals();
 lb();
@@ -47,6 +48,7 @@ echo '<table id="table_id" class="display">
             <th>Barcode</th>
             <th>Email</th>
             <td>Is Duplicate</td>
+            <td>Resend Welcome Email</td>
         </tr>
     </thead>
     <tbody>';
@@ -67,6 +69,7 @@ foreach($onlineRegistrations['entries'] as $patronInfo)
         echo '<td>' . $patronDetails['emails'][0] . '</td>';
         if($num > 1) { echo '<td>YES</td>';}
         else { echo '<td>NO</td>';}
+        echo '<td><a href="https://onlinecardregistration.mpl.on.ca/resendemail.php?barcode=' . $patronDetails['barcodes'][0] . '" target="_blank">Resend</a></td>';
     }
 //pre($onlineRegistrations);
 

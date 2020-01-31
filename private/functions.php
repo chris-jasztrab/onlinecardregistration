@@ -2936,6 +2936,39 @@ foreach($pinarray as $pinnumber) {
   return $pinholder;
 }
 
+function updatePatronPIN($patronID, $pin) {
+  $currentPatron = getPatronDetails($patronID);
+
+  $uri = 'https://';
+  $uri .= appServer;
+  $uri .= ':443/iii/sierra-api/v';
+  $uri .= apiVer;
+  $uri .= '/patrons/';
+  $uri .= $patronID;
+  //echo "URI is: " . $uri;
+  $query_string = '{  "pin": "';
+  $query_string .=  $pin;
+  $query_string .= '"}';
+  //setup the API access token
+  setApiAccessToken();
+  //get the access token we just created
+  $apiToken = getCurrentApiAccessToken();
+  //build the headers that we are going to use to post our json to the api
+  $headers = array(
+      "Authorization: Bearer " . $apiToken,
+      "Content-Type:  application/json");
+  //use the headers, url, and json string to query the api
+  $ch = curl_init();
+  curl_setopt($ch, CURLOPT_URL, $uri);
+  curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+  curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+  curl_setopt($ch, CURLOPT_POSTFIELDS, $query_string);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+  $result = curl_exec($ch);
+  curl_close($ch);
+  return $result;
+}
+
 function createOnlinePatron($patronArrayObj) {
   $randomPIN = generateRandomPIN(0,9,5);
   $newBarcode = getNextBarcode();

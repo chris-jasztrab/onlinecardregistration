@@ -237,18 +237,16 @@ if(!isset($_SESSION['notabot'])) {
 
 
 <?php
-// as part of the patron creation process we are actually creating a library card with a barcode and background image
-// this gets created and rendered on the server, then shown to the patron and emailed to them.  The function below
-// cleans up these files and erases ones that are over 2 hours old.
-$files = glob("/var/www/html/onlinecardregistration/21387*");
-$now   = time();
-foreach ($files as $file) {
-    if (is_file($file)) {
-        if ($now - filemtime($file) >= 60 * 60 * 2) { // 2 hours
-            unlink($file);
-        }
-    }
-}
+
+//$files = glob("/var/www/html/onlinecardregistration/21387*");
+//$now   = time();
+//foreach ($files as $file) {
+//    if (is_file($file)) {
+//        if ($now - filemtime($file) >= 60 * 60 * 2) { // 2 hours
+//            unlink($file);
+//        }
+//    }
+//}
 
 ?>
 
@@ -304,6 +302,9 @@ foreach ($files as $file) {
 
 
 <?php
-// old code that I didn't remove yet.  I had originally moved the file delete into a function, but then i moved the code to this page.
-//delete_oldfiles('/var/www/html/onlinecardregistration/html/', 86400, '21387*');
+// as part of the patron creation process we are actually creating a library card with a barcode and background image
+// this gets created and rendered on the server, then shown to the patron and emailed to them.  The function below
+// cleans up these files and erases ones that are over 2 hours old.
+
+delete_oldfiles('/var/www/html/onlinecardregistration/html/', 86400, '21387*');
 ?>

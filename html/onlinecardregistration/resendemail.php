@@ -1,21 +1,36 @@
-
 <?php
 include('../../private/initialize.php');
 include('../../private/PHPMailer.php');
 include('../../private/Exception.php');
-//pre($_SESSION);
+//error_reporting(E_ALL);
+//ini_set("display_errors", 1);
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 
-// CODE TO EMAIL PATRON A COPY OF THEIR CARD - NEED TO CHANGE THIS SO I ATTACH THEIR LIBRARY CARD AND THEN DISPLAY IT  - DONE IN HEADERS CID
-//$bodytext = '<center>';
-//$bodytext .= '<H1>Here is your new library card!</H1>';
-//$bodytext .= '<img src="cid:card.png">';
-//$bodytext .= '<p>';
-//$bodytext .= "Your PIN is: " . $patronPIN;
-//$bodytext .= '</center>';
-$bodytext = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+if($_SESSION['isAdmin'] == 'TRUE') {
+
+    $patronBarcode = $_GET['barcode'] ?? '';
+    if (strlen($patronBarcode) < 14) {
+        echo 'You must pass a barcode to this page.';
+        exit();
+    }
+
+    $patronPIN = generateRandomPIN(0, 9, 5);
+    $patronID = findPatronIDByBarcode($patronBarcode);
+    $allPatronDetails = getAllPatronDetails($patronID);
+    $patronEmail = getPatronEmailAddress($patronID);
+    $updatepin = updatePatronPIN($patronID, $patronPIN);
+
+
+// the code below shows the image to the user on the screen and also emails them a copy of the card and our welcome email.
+    createLibraryCardImage($patronBarcode);
+    $libraryCardFile = $patronBarcode . ".png";
+
+    echo 'going to resend email... ';
+
+    $bodytext = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:v="urn:schemas-microsoft-com:vml">
 <head>
@@ -131,13 +146,13 @@ $bodytext = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "ht
 		}
 	</style>
 </head>
-<body class="clean-body" style="margin: 0; padding: 0; -webkit-text-size-adjust: 100%; background-color: #dbb727;">
+<body class="clean-body" style="margin: 0; padding: 0; -webkit-text-size-adjust: 100%; background-color: #aed0c7;"> <!-- was  #dbb727 -->
 <!--[if IE]><div class="ie-browser"><![endif]-->
-<table bgcolor="#dbb727" cellpadding="0" cellspacing="0" class="nl-container" role="presentation" style="table-layout: fixed; vertical-align: top; min-width: 320px; Margin: 0 auto; border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #dbb727; width: 100%;" valign="top" width="100%">
+<table bgcolor="#aed0c7" cellpadding="0" cellspacing="0" class="nl-container" role="presentation" style="table-layout: fixed; vertical-align: top; min-width: 320px; Margin: 0 auto; border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #aed0c7; width: 100%;" valign="top" width="100%">
 <tbody>
 <tr style="vertical-align: top;" valign="top">
 <td style="word-break: break-word; vertical-align: top;" valign="top">
-<!--[if (mso)|(IE)]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="background-color:#dbb727"><![endif]-->
+<!--[if (mso)|(IE)]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="background-color:#aed0c7"><![endif]-->
 <div style="background-image:url(\'cid:Background_1_4.png\');background-position:top center;background-repeat:no-repeat;background-color:#e9e4d4;">
 <div class="block-grid no-stack" style="Margin: 0 auto; min-width: 320px; max-width: 640px; overflow-wrap: break-word; word-wrap: break-word; word-break: break-word; background-color: transparent;">
 <div style="border-collapse: collapse;display: table;width: 100%;background-color:transparent;">
@@ -160,16 +175,18 @@ $bodytext = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "ht
 <!--[if mso]></td></tr></table><![endif]-->
 <div align="center" class="img-container center fixedwidth" style="padding-right: 20px;padding-left: 20px;">
 <!--[if mso]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr style="line-height:0px"><td style="padding-right: 20px;padding-left: 20px;" align="center"><![endif]-->
-<div style="font-size:1px;line-height:20px"> </div><img align="center" alt="Image" border="0" class="center fixedwidth" src="cid:ecard.png" style="text-decoration: none; -ms-interpolation-mode: bicubic; border: 0; height: auto; width: 100%; max-width: 450px; display: block;" title="Image"/>
+<div style="font-size:1px;line-height:20px"> </div><img align="center" alt="Image" border="0" class="center fixedwidth" src="cid:patroncard.png" style="text-decoration: none; -ms-interpolation-mode: bicubic; border: 0; height: auto; width: 100%; max-width: 350px; display: block;" title="Image"/>
 <p></p>
-<p style="line-height: 1.2; text-align: center; font-size: 22px; mso-line-height-alt: 26px; margin: 0;"><span style="font-size: 22px; color: #000000;"><span style="font-size: 22px;"><span style="font-size: 15px;">Click Image to Enlarge</span></span></span></p>
+
 <div style="font-size:1px;line-height:20px"> </div>
 <!--[if mso]></td></tr></table><![endif]-->
 </div>
 <!--[if mso]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding-right: 0px; padding-left: 0px; padding-top: 15px; padding-bottom: 0px; font-family: Arial, sans-serif"><![endif]-->
 <div style="color:#555555;font-family:Arial, \'Helvetica Neue\', Helvetica, sans-serif;line-height:1.2;padding-top:15px;padding-right:0px;padding-bottom:0px;padding-left:0px;">
 <div style="font-family: Arial, \'Helvetica Neue\', Helvetica, sans-serif; font-size: 12px; line-height: 1.2; color: #555555; mso-line-height-alt: 14px;">
-<p style="font-size: 22px; line-height: 1.2; text-align: center; mso-line-height-alt: 26px; margin: 0;"><span style="font-size: 22px; color: #000000;"><span style="font-size: 22px;">Your PIN is: XXXX</span></span></p>
+<p style="font-size: 22px; line-height: 1.2; text-align: center; mso-line-height-alt: 26px; margin: 0;"><span style="font-size: 22px; color: #000000;"><span style="font-size: 22px;">For security reasons, staff are not able to retrieve your old pin. Your new PIN is: ' . $patronPIN;
+
+    $bodytext .= '</span></span></p>
 </div>
 </div>
 <!--[if mso]></td></tr></table><![endif]-->
@@ -659,32 +676,40 @@ $bodytext = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "ht
 </body>
 </html>';
 
+    lb();
+    echo 'resending email...';
+    lb();
+    $email = new PHPMailer();
+    $email->IsHTML(true);
+    $email->SetFrom('registration@beinspiredatmpl.ca', 'Milton Public Library'); //Name is optional
+    $email->Subject = 'Welcome to MPL!';
+    $email->Body = $bodytext;
+    $email->AddAddress($patronEmail);
 
-
-$email = new PHPMailer();
-$email->IsHTML(true);
-$email->SetFrom('registration@mpl.on.ca', 'Milton Public Library'); //Name is optional
-$email->Subject   = 'Welcome to MPL';
-$email->Body      = $bodytext;
-$email->AddAddress('chris.jasztrab@gmail.com');
-$email->AddAddress('chris.jasztrab@mpl.on.ca');
-
-//$file_to_attach = 'C:\\xampp\\htdocs\\sites\\onlinecardreg\\public\\' . $libraryCardFile;
+    $file_to_attach = './' . $libraryCardFile;
 
 //$email->AddAttachment( $file_to_attach , '21387009002003.png' );
-//$email->AddEmbeddedImage($libraryCardFile, 'card.png');
-$email->AddEmbeddedImage('./html_email/images/Background_1_4.png','Background_1_4.png');
-$email->AddEmbeddedImage('./html_email/images/iphone.png','iphone.png');
-$email->AddEmbeddedImage('./html_email/images/ecard.png','ecard.png');
-$email->AddEmbeddedImage('./html_email/images/Bee.png','Bee.png');
-$email->AddEmbeddedImage('./html_email/images/Bee_2.png','Bee_2.png');
-$email->AddEmbeddedImage('./html_email/images/gale_comp.png','gale_comp.png');
-$email->AddEmbeddedImage('./html_email/images/mpl_logo.png','mpl_logo.png');
-$email->AddEmbeddedImage('./html_email/images/facebook.png','facebook.png');
-$email->AddEmbeddedImage('./html_email/images/twitter.png','twitter.png');
-$email->AddEmbeddedImage('./html_email/images/insta.png','insta.png');
-$email->AddEmbeddedImage('./21387009002227.png','patroncard.png');
+    $email->AddEmbeddedImage('./html_email/images/Background_1_4.png', 'Background_1_4.png');
+    $email->AddEmbeddedImage('./html_email/images/iphone.png', 'iphone.png');
+//$email->AddEmbeddedImage('./html_email/images/ecard.png','ecard.png');
+    $email->AddEmbeddedImage('./html_email/images/Bee.png', 'Bee.png');
+    $email->AddEmbeddedImage('./html_email/images/Bee_2.png', 'Bee_2.png');
+    $email->AddEmbeddedImage('./html_email/images/gale_comp.png', 'gale_comp.png');
+    $email->AddEmbeddedImage('./html_email/images/mpl_logo.png', 'mpl_logo.png');
+    $email->AddEmbeddedImage('./html_email/images/facebook.png', 'facebook.png');
+    $email->AddEmbeddedImage('./html_email/images/twitter.png', 'twitter.png');
+    $email->AddEmbeddedImage('./html_email/images/insta.png', 'insta.png');
+    $email->AddEmbeddedImage($file_to_attach, 'patroncard.png');
 
-return $email->Send();
+    $email->Send();
 
+    echo 'Resent the email to ' . $patronEmail . '. Let them know that their PIN has changed and it is now: ' . $patronPIN;
+}
+if($_SESSION['isAdmin'] !=TRUE) {
+    //echo 'Access Denied';
+    header('Location: https://www.google.ca');
+    die();
+}
 ?>
+
+
