@@ -26,7 +26,7 @@ include('../../private/initialize.php');
 </head>
 
 <?php
-if($_GET['secretphrase'] == 'ShowTheStats') {
+if($_GET['secretphrase'] == patronStatsSecret) {
     $_SESSION['isAdmin'] = 'TRUE';
 lb();
 echo 'Number of people who have renewed online: ' . getNumberOfOnlineRenewals();

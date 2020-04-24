@@ -1,20 +1,28 @@
+
 <!doctype html>
 
 <html lang="en">
   <head>
 
-      <!-- Global site tag (gtag.js) - Google Analytics -->
-      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-156185864-1"></script>
-      <script>
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
+<?php
 
-          gtag('config', 'UA-156185864-1');
-      </script>
+if(useGoogleAnalytics == '1') { ?>
+      <html lang="en">
+      <head>
 
+          <!-- Global site tag (gtag.js) - Google Analytics -->
+          <script async src="https://www.googletagmanager.com/gtag/js?id=UA-156185864-1"></script>
+          <script>
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+
+              gtag('config', 'UA-156185864-1');
+          </script>
+
+<?php } ?>
       <meta charset="utf-8">
-    <link rel="canonical" href="https://www.bootstraptoggle.com">
+    <link rel="canonical" href="https://www.beinspiredatmpl.ca">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.3/styles/github.min.css" rel="stylesheet" >
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">

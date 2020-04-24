@@ -26,7 +26,7 @@ function require_login() {
   // Call require_login() at the top of any page which needs to
   // require a valid login before granting acccess to the page.
     if (!is_logged_in()) {
-        redirect_to('auth_form.php');
+        redirect_to('index.php');
     } else {
         // Do nothing, let the rest of the page proceed
     }
@@ -344,7 +344,6 @@ function findPatronIDByEmail($email) {
   //$patronLink = stripped($patronLink);
   //return $patronLink;
 }
-
 
 // NOT DONE!! get overdue patron items
 function getPatronOverdueItems($patronID) {
@@ -1516,7 +1515,7 @@ function geocodeAddress($address) {
 function isPrivateResidence($address) {
   // returns an array of lat long points for given address.
   $latlong = getLatLong($address);
-  //pre($latlong);
+  pre($latlong);
   $uri = 'http://dev.virtualearth.net/REST/v1/locationrecog/';
   $uri .= $latlong[0] . ',';
   $uri .= $latlong[1];
@@ -1533,7 +1532,7 @@ function isPrivateResidence($address) {
   curl_close($ch);
   $jcode = json_decode($result, true);
   $isresidence = $jcode['resourceSets']['0']['resources']['0']['isPrivateResidence'];
-
+  echo $isresidence;
   if($isresidence == 'True') {
     return true;
   }
@@ -1795,6 +1794,17 @@ function getWard($address) {
 
 }
 
+function isPatronInsideCatchmentArea($address) {
+  $latlong = getLatLong($address);
+  $latitude = $latlong[0];
+  $longitude = $latlong[1];
+  $sampleCoords = $latitude . ', ' . $longitude;
+  $pointLocation = new pointLocation();
+  if($pointLocation->pointInPolygon($sampleCoords, catchment) == 'inside') {
+    return true;
+  }
+}
+
 function getPatronWardByID($patronID) {
   $patronAddress = getPatronAddress($patronID);
   $wardResult = getWard($patronAddress);
@@ -1858,6 +1868,24 @@ function delLineFromFile($fileName, $lineNum){
          fclose($fp);
          }
  return true;
+ }
+
+function initializeBarcodeFile()
+ {
+   if (!file_exists('../../private/currentbarcode.txt')) {
+     // File does ! not exist so create it an initialize it with the starting barcode.
+     //echo 'file did not exist';
+     if(startingBarcodeNumber == '') {
+       echo 'Starting Barcode has not been defined in the config.php file.  Please update the config.php file with all required details before running the app';
+       die();
+     }
+     $writefile = fopen('../../private/currentbarcode.txt', "w");
+     if (flock($writefile, LOCK_EX)) {
+       fwrite($writefile, startingBarcodeNumber);
+       flock($writefile, LOCK_UN);
+     }
+     fclose($writefile);
+   }
  }
 
 function getNextLibraryCard() {
@@ -2982,7 +3010,6 @@ function createOnlinePatron($patronArrayObj) {
   $addressType = $patronArrayObj['addressType'];
   $phoneNumber = $patronArrayObj['phonenumber'];
   $numberType = $patronArrayObj['numberType'];
-  $homelibrary = $patronArrayObj['homelibrary'];
   //$pin = substr($phoneNumber, -4,4);
   //$barcode = $patronArrayObj['barcode'];
   //$barcode = '21387001717764';  TEST CARD USED SO I DONT CHEW UP EXTRA CARDS IN MY CARD DB
@@ -3019,8 +3046,6 @@ function createOnlinePatron($patronArrayObj) {
   $query_string .= strip_tags($expirationDate);
   $query_string .='","birthDate": "';
   $query_string .= strip_tags($birthdate);
-  $query_string .= '","homeLibraryCode": "';
-  $query_string .= $homelibrary;
   $query_string .= '"}';
   //echo $query_string;
 
@@ -3229,7 +3254,6 @@ function getNumberOfMarketingTargets() {
 
 }
 
-
 function getOnlineRegistrations() {
   $uri = 'https://';
   $uri .= appServer;
@@ -3251,11 +3275,102 @@ function getOnlineRegistrations() {
     "expr": {
       "op": "has",
       "operands": [
-        "Created via OnlinePatronCreationForm v1",
+        "Created via MPL OnlinePatronCreationForm v1",
         ""
       ]
     }
   }';
+  //echo " query string is " . $query_string . " ";
+  //setup the API access token
+  setApiAccessToken();
+
+  //get the access token we just created
+  $apiToken = getCurrentApiAccessToken();
+  //echo " this is the API token " . $apiToken . " ";
+
+  //build the headers that we are going to use to post our json to the api
+  $headers = array(
+      "Authorization: Bearer " . $apiToken,
+      "Content-Type:  application/json");
+
+  //use the headers, url, and json string to query the api
+  $ch = curl_init();
+  curl_setopt($ch, CURLOPT_URL, $uri);
+  curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+  curl_setopt($ch, CURLOPT_POST, 1);
+  curl_setopt($ch, CURLOPT_POSTFIELDS, $query_string);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+  //get the result from our json api query
+  $result = curl_exec($ch);
+  $jcode = json_decode($result, true);
+  return $jcode;
+
+}
+
+function getHoldsReadyForPickup() {
+  $uri = 'https://';
+  $uri .= appServer;
+  $uri .= ':443/iii/sierra-api/v';
+  $uri .= apiVer;
+  $uri .= '/patrons/query';
+  $uri .= '?offset=0';
+  $uri .= '&limit=100000';
+  //echo $uri;
+  $query_string = '{
+  "queries": [
+    {
+      "target": {
+        "record": {
+          "type": "patron"
+        },
+        "id": 808080
+      },
+      "expr": [
+        {
+          "op": "equals",
+          "operands": [
+            "i"
+          ]
+        }
+      ]
+    },
+    "or",
+    {
+      "target": {
+        "record": {
+          "type": "patron"
+        },
+        "id": 808080
+      },
+      "expr": [
+        {
+          "op": "equals",
+          "operands": [
+            "j"
+          ]
+        }
+      ]
+    },
+    "or",
+    {
+      "target": {
+        "record": {
+          "type": "patron"
+        },
+        "id": 808080
+      },
+      "expr": [
+        {
+          "op": "equals",
+          "operands": [
+            "b"
+          ]
+        }
+      ]
+    }
+  ]
+}';
   //echo " query string is " . $query_string . " ";
   //setup the API access token
   setApiAccessToken();

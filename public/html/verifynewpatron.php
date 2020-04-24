@@ -1,24 +1,22 @@
 <?php
  include('../../private/initialize.php');
  // ensure people can't just visit this page without having to solve the recaptcha first
-if(!isset($_SESSION['notabot'])) {
-    header('Location: \index.php');
+if(useRecaptcha == '1') {
+    if (!isset($_SESSION['notabot'])) {
+        header('Location: \index.php');
+    }
 }
 
-$pcode2result = get_iii_pcode2();
-$pcode3result = get_iii_pcode3();
-$patrontypesresult = get_patron_types();
-$locationresult = get_branch_locations();
-$_SESSION['about_to_post'] = 'TRUE';
+if(!isset($_SESSION['addressissue'])) {
+    ($_SESSION['addressissue'] = '');
+}
 
+$_SESSION['about_to_post'] = 'TRUE';
 // check to see if a session variable exists first, if it doesn't them set it to the data posted from the form.php page
 // we do this because we use all session variables below to post the patron to the next page.  If there is an issue with their
 // applicaton we can auto fill in all the data back into the form from the session variables.
 if(!isset($_SESSION['last_name'])) $_SESSION['last_name'] = trim(strtoupper($_POST['last_name']));
 if(!isset($_SESSION['first_name'])) $_SESSION['first_name'] = trim(strtoupper($_POST['first_name']));
-if(!isset($_SESSION['dob_day'])) $_SESSION['dob_day'] = $_POST['dob_day'];
-if(!isset($_SESSION['dob_month'])) $_SESSION['dob_month'] = $_POST['dob_month'];
-if(!isset($_SESSION['dob_year'])) $_SESSION['dob_year'] = $_POST['dob_year'];
 if(!isset($_SESSION['date_of_birth'])) $_SESSION['date_of_birth'] = $_POST['date_of_birth'];
 
 if(!isset($_SESSION['street'])) $_SESSION['street'] = trim(strtoupper($_POST['street']));
@@ -28,35 +26,13 @@ if(!isset($_SESSION['postalcode'])) $_SESSION['postalcode'] = fixPostalCode(trim
 if(!isset($_SESSION['phonenumber'])) $_SESSION['phonenumber'] = trim(strtoupper($_POST['phone']));
 if(!isset($_SESSION['email'])) $_SESSION['email'] = trim(($_POST['email']));
 
-if(!isset($_SESSION['pcode2'])) $_SESSION['pcode2'] = $_POST['pcode2'];
-if(!isset($_SESSION['pcode3'])) $_SESSION['pcode3'] = $_POST['pcode3'];
-if(!isset($_SESSION['homelibrary'])) $_SESSION['homelibrary'] = $_POST['homelibrary'];
 if(!isset($_SESSION['marketing_preference'])) $_SESSION['marketing_preference'] = $_POST['marketing_preference'];
 if(!isset($_SESSION['notice_preference'])) $_SESSION['notice_preference'] = $_POST['notice_preference'];
-
-//not using this yet.  Eventually we will have an option for parents to apply for kids cards by authenticating their card first.
-if(isset($_POST['parentorguardian'])) {
-  $_SESSION['parentorguardian'] = $_POST['parentorguardian'];
-}
-
-// old code from the internal staff tools application
-if(isset($_POST['familycheck']))
-{
-  $_SESSION['familycheck'] = 'on';
-}
-else {
-  unset($_SESSION['familycheck']);
-}
-
-// we determine patron type by age.
 
 // attractive form below to show the patron the data they entered and give them an opportunity to correct it.
 // this form gets submitted to patronpostpatron.php yes i am not clever with my filenames.
 
-$patron_type = returnPatronTypeByBirthday($_SESSION['date_of_birth']);
-//echo 'patron type from function is: ' . $patron_type;
-$_SESSION['patron_type'] = $patron_type;
-//pre($_SESSION);
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -213,58 +189,6 @@ $_SESSION['patron_type'] = $patron_type;
                    echo "selected";}?>>No</option>
                 </select>
               </div>
-
-                 <?php $location_result = get_branch_locations(); ?>
-                 <div class="form-group">
-                   <div class="form_labels">Home Library</div>
-                   <select class="form-control input-small" name="homelibrary" style="height: 46px;" id="homelibrary" style="margin-bottom: 10px">
-                     <?php
-                       while ($row = pg_fetch_array($location_result)) {
-                         echo '<option value="' . $row[0] . '"';
-                         if($_SESSION['homelibrary'] == $row[0]){ echo 'selected';}
-                         echo '>' . $row[1] . '</option>';
-                         lb();
-                       }
-                       ?>
-                    </select>
-                 </div>
-
-
-                 <?php $pcode2_result = get_iii_pcode2();?>
-                 <div class="form-group">
-
-                   <div class="form_labels">Additional Lanauages Spoken in the Home</div>
-                   <select class="form-control input-small" name="pcode2" style="height: 46px;" id="pcode2" style="margin-bottom: 10px">
-                     <?php
-                       while ($row = pg_fetch_array($pcode2_result)) {
-                         echo '<option value="' . $row[0] . '"';
-                         if($_SESSION['pcode2'] == $row[0]){ echo 'selected';}
-                         echo '>';
-                         if($row[1] == '---') { echo 'None Selected';} else { echo $row[1]; } echo '</option>';
-                         lb();
-                       }
-                       ?>
-                    </select>
-
-                 </div>
-
-                 <?php $pcode3_result = get_iii_pcode3();?>
-                 <div class="form-group">
-
-                   <div class="form_labels">Additional Lanauages Spoken in the Home</div>
-                   <select class="form-control input-small" name="pcode3" style="height: 46px; margin-bottom: 10px" id="pcode3">
-                     <?php
-                       while ($row = pg_fetch_array($pcode3_result)) {
-                         echo '<option value="' . $row[0] . '"';
-                         if($_SESSION['pcode3'] == $row[0]){ echo 'selected';}
-                         echo '>';
-                        if($row[1] == 'Unknown') { echo 'None Selected';} else { echo $row[1]; } echo '</option>';
-                         lb();
-                       }
-                       ?>
-                    </select>
-
-                 </div>
 
                  <button type="submit" id="btnSubmit" class="submit action-button">Submit</button>
 

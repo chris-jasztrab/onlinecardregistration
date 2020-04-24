@@ -187,6 +187,7 @@ var BFHDayOfWeekStart = 0;
       $daysHeader.html('');
       for (day=BFHDayOfWeekStart; day < BFHDaysList.length; day=day+1) {
         $daysHeader.append('<th>' + BFHDaysList[day] + '</th>');
+
       }
       for (day=0; day < BFHDayOfWeekStart; day=day+1) {
         $daysHeader.append('<th>' + BFHDaysList[day] + '</th>');

@@ -10,32 +10,32 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 // again check to ensure people aren't going right to this page
-if(!isset($_SESSION['notabot'])) {
-    header('Location: \index.php');
+if(useRecaptcha == '1') {
+    if (!isset($_SESSION['notabot'])) {
+        header('Location: \index.php');
+    }
 }
 
 // check if it's a post request, this page should only ever get post requests, if not kick them back to the start
 
 // get all the POST details and do some formatting.  We like all uppercase in our patron records for instance.  This helps
-// keep patron records consistant.
+// keep patron records consistent.
 
  if (!is_post_request()) {
 header('Location: \index.php');
  }
 
+ // this checks to see that they came from the verifypatron.php page. If not kick them back to the index page.
  if($_SESSION['about_to_post'] != 'TRUE') {
      header('Location: \index.php');
  }
 
  if($_SESSION['about_to_post'] == 'TRUE') {
-
-
      if (is_post_request()) {
 
         $_SESSION['about_to_post'] = 'NULL';
         if(isset($_POST['email']))
           {
-
               $post_email = $_POST['email'];
               $post_name = strtoupper($_POST['lname']) . ', ' . strtoupper($_POST['fname']);
               $post_street = strtoupper($_POST['street']);
@@ -43,9 +43,6 @@ header('Location: \index.php');
               $post_postalcode = strtoupper($_POST['postalcode']);
               $post_phone = $_POST['phone'];
               $post_bithdate = $_POST['date_of_birth_field'];
-              $post_homelibrary = $_POST['homelibrary'];
-              $post_pcode2 = $_POST['pcode2'];
-              $post_pcode3 = $_POST['pcode3'];
               $post_city = strtoupper($_POST['city']);
               $post_province = strtoupper($_POST['province']);
               $post_notice = $_POST['notice_preference'];
@@ -62,11 +59,8 @@ header('Location: \index.php');
               $_SESSION['province'] = strtoupper($_POST['province']);
               $_SESSION['phonenumber'] = strtoupper($_POST['phone']);
               $_SESSION['date_of_birth'] = $_POST['date_of_birth_field'];
-              $_SESSION['homelibrary'] = $_POST['homelibrary'];
-              $_SESSION['pcode2'] = $_POST['pcode2'];
-              $_SESSION['pcode3'] = $_POST['pcode3'];
               $_SESSION['notice_preference'] = $_POST['notice_preference'];
-              $_SESSION[',marketing_preference'] = $_POST['marketing_preference'];
+              $_SESSION['marketing_preference'] = $_POST['marketing_preference'];
           }
 
       else {
@@ -77,9 +71,6 @@ header('Location: \index.php');
         $post_postalcode = strtoupper($_SESSION['postalcode']);
         $post_phone = $_SESSION['phonenumber'];
         $post_bithdate = $_SESSION['date_of_birth'];
-        $post_homelibrary = $_SESSION['homelibrary'];
-        $post_pcode2 = $_SESSION['pcode2'];
-        $post_pcode3 = $_SESSION['pcode3'];
         $post_notice = $_SESSION['notice_preference'];
         $post_marketing = $_SESSION['marketing_preference'];
         $post_patrontype = $_SESSION['patron_type'];
@@ -96,8 +87,7 @@ header('Location: \index.php');
        'addressType'=>'a',
        'phonenumber'=>$post_phone,
        'numberType'=>'t',
-       'birthdate'=>$post_bithdate,
-       'homelibrary'=>$post_homelibrary);
+       'birthdate'=>$post_bithdate);
 
         // get their address into its own array - we will pass this to a function to do address verificaton.
        $myAddress = [
@@ -114,36 +104,30 @@ header('Location: \index.php');
     //exit();
     //pre($_SESSION);
 
-         // Milton is split into wards, in the config file there are GPS lat and long coordinates that define the wards.
-         // if you aren't in one of those wards then you are are not eligible for a MPL library card.  Bring them to a page that says this.
-         $ward = getWard($myAddress);
-         if(!in_array($ward,array("WARD 1", "WARD 2", "WARD 3", "WARD 4")))
-         {
-             header('Location: \notinmilton.php');
-             die();
-         }
-         // check to see that the address is valid.  This is done using Bing Maps API.  They give API access to public libraries / nonprofit for free
-         // the function checks to see that the postal code actually matches the address supplied. If not, send them back to the page and ask them to correct it.
+       if(verifyAddress == '1') {
          $addressCheck  = isAddressValid($myAddress);
          if(!$addressCheck) {
             $_SESSION['addressissue'] = TRUE;
-             header('Location: \verifynewpatron.php');
+            // there was an issue with the address. Postal code did not match the provided address.  Redirect back and ask patron to correct
+             header('Location: verifynewpatron.php');
              die();
          }
+       }
 
-
-         //$residenceCheck = isPrivateResidence($myaddress);
-         //if (!$busresult) {
-         //    header('Location: \notahouse.php');
-         //    die();
-         //}
+         if(verifyCatchment == '1') {
+             // Patron address has been verified as an actual address.  check to see that they fall inside the catchment area.  IF they don't redirect to a page explaining card policy.
+             if (!isPatronInsideCatchmentArea($myAddress)) {
+                 header('Location: https://www.google.ca'); // set this to a url of a page that explains your policies on who can get a card.
+                 die();
+             }
+         }
 
         // All checks have been passed so go ahead and create the patron.  Part of the process of creating the patron it to create
          // a random 6 digit pin.  The ILS has some (in my opinion stupid) checks to ensure the pin is non-trivial, so 1111 is not valid.
          // the function makes a random pin with non-repeating numbers.
 
-         $myNewPatron = createOnlinePatron($newPatronInfo);
-        // get the pin from the patron record to display to the user
+       $myNewPatron = createOnlinePatron($newPatronInfo);
+      // get the pin from the patron record to display to the user
        $patronPIN = $myNewPatron['pin'];
        // get the patronID from the record so we can get all the details.
        $justpatronID = linkStripped($myNewPatron['patronIDString']);
@@ -151,15 +135,9 @@ header('Location: \index.php');
        lb();
        $allPatronDetails = getAllPatronDetails($justpatronID);
        // legacy code
-       $pcode1value = updatePcode1Value($justpatronID, $myAddress);
-       if($pcode1value == '-') {
-         $addOutsideMiltonMessage = updatePatronAccountMessage($justpatronID, "Patron Address appears to be outside Milton - Check ID");
-       }
-       // update the pcode values because this can't be done at the time of patron creation.
-       $pcode2value = updatePcode2Value($justpatronID, $_SESSION['pcode2']);
-       $pcode3value = updatePcode3Value($justpatronID, $_SESSION['pcode3']);
+
        // update the patron type to be 'Online-only'  we created this patron type in the ILS to have no access to physical resources.
-       $updatePatronType = updatePatronType($justpatronID, '7');
+       $updatePatronType = updatePatronType($justpatronID, patronTypeNumber);
        // update how they want notifications
        $updateNoticePreference = updateNoticePreference($justpatronID, $post_notice);
        // update their marketing preferences, we just use a patron note for this.
@@ -168,10 +146,8 @@ header('Location: \index.php');
          }
        $todaysDate = date('m/d/Y');
        // add a patron note saying that the record was created using the online tool.
-       $addPatronCreateDate = updatePatronNotes($justpatronID, 'Created via OnlinePatronCreationForm v1 on ' . $todaysDate);
-       if(!empty($_SESSION['parentorguardian'])) {
-        updatePatronGuardian($justpatronID, $_SESSION['parentorguardian']);
-       }
+       $addPatronCreateDate = updatePatronNotes($justpatronID, 'Created via MPL OnlinePatronCreationForm v1 on ' . $todaysDate);
+
      }
  }
  //pre($allPatronDetails);
@@ -219,7 +195,7 @@ header('Location: \index.php');
           <img src="<?php echo $libraryCardFile; ?>" class="center-fit" alt="Library Card Image" img style="border:1px solid black">
           <h3>Your PIN is: <?php echo $patronPIN; ?></h3>
          <br/>
-         <h3>Check your email or further details and a copy of your e-card</h3>
+         <h3>Check your email for further details and a copy of your e-card</h3>
      </div>
  </center>
 </body>

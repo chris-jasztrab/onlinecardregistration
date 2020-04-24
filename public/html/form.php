@@ -2,8 +2,8 @@
 include('../../private/initialize.php');
 // again we pull in the initialize file so we can access all our libraries.  This matters on this page because we are using a lot of
 // functions to access Sierra via the API to pull down PCODE values, locations, etc.
-
 // set a session variable right from the start saying the form is not complete.  We check for this later.
+
 $_SESSION['form_complete'] = "no";
 // check to see that they actually came to this page from our start page.  This ensures they went through the Google reCAPTCHA check.
 if(isset($_POST['g-recaptcha-response']))  {
@@ -14,9 +14,11 @@ if(isset($_POST['g-recaptcha-response']))  {
 }
 // if the notabot session isn't set, force them back to the index page so they have to go through the reCAPTCHA
 // thank-you to azmind.com for the multi step form html code.  It makes it easy for a patron to walk through creating a patron record.
-
-if(!isset($_SESSION['notabot'])) {
-    header('Location: \index.php');
+// this follows the switch inside the config file.  Only redirects if it's set to 1.
+if(useRecaptcha == '1') {
+    if (!isset($_SESSION['notabot'])) {
+        header('Location: index.php');
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -35,10 +37,10 @@ if(!isset($_SESSION['notabot'])) {
     <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
     <!--<link href="../../assets/css/ie10-viewport-bug-workaround.css" rel="stylesheet">-->
     <!-- Custom styles -->
-
+    <link href="assets/multistepform/css/style.css" rel="stylesheet">
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-formhelpers/2.3.0/css/bootstrap-formhelpers.min.css" rel="stylesheet">
-    <link href="assets/multistepform/css/style.css" rel="stylesheet">
+
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]-->
@@ -68,8 +70,8 @@ if(!isset($_SESSION['notabot'])) {
                 </ul> -->
             <!-- fieldsets -->
             <br><br><br><br>
+<fieldset>
 
-            <fieldset>
                 <h2 class="fs-title">Personal Details</h2>
                 <h3 class="fs-subtitle">Please provide your name and date of birth</h3>
                 <div class="form_labels">First Name</div>
@@ -78,9 +80,8 @@ if(!isset($_SESSION['notabot'])) {
                 <input type="text" name="last_name" placeholder="" id="last_name" autocomplete="mpl_lname_v1.0" style="margin-bottom: 10px"/>
                 <div class="form_labels">Date of Birth</div>
                 <div class="bfh-datepicker" id="date_of_birth" autocomplete="mpl_dob_v1.0" data-format="y-m-d" name="date_of_birth"></div>
-                <input type="button" name="next" class="next action-button" value="Next"/>
-            </fieldset>
-            <fieldset>
+
+
                 <h2 class="fs-title">Address</h2>
                 <h3 class="fs-subtitle">Please provide your address and postal code</h3>
                 <div class="form_labels">Street Address</div>
@@ -109,12 +110,8 @@ if(!isset($_SESSION['notabot'])) {
                 </div>
                 <div class="form_labels">Postal Code</div>
                 <input type="text" name="postalcode" placeholder="" autocomplete="mpl_postal_v1.0" style="margin-bottom: 10px"/>
-                <input type="button" name="previous" class="previous action-button-previous" value="Previous"/>
-                <input type="button" name="next" class="next action-button" value="Next"/>
-            </fieldset>
 
 
-            <fieldset>
                 <h2 class="fs-title">Contact Information</h2>
                 <h3 class="fs-subtitle">Please provide your email address, phone number, and how you would like to be contacted. See our <p><a href="https://www.mpl.on.ca/policy" target="_blank">privacy policy</a> to learn how we use this information.</h3>
                 <div class="form_labels">Email Address</div>
@@ -126,11 +123,8 @@ if(!isset($_SESSION['notabot'])) {
                     <option value="z">Email</option>
                     <option value="p">Phone</option>
                 </select>
-                <input type="button" name="previous" class="previous action-button-previous" value="Previous"/>
-                <input type="button" name="next" class="next action-button" value="Next"/>
-            </fieldset>
 
-            <fieldset>
+
                 <h2 class="fs-title">The Other Stuff</h2>
                 <h3 class="fs-subtitle">Please let us know the following</h3>
 
@@ -145,84 +139,9 @@ if(!isset($_SESSION['notabot'])) {
                 </div>
 
 
-                <?php
-                // get a list of branch locations from the ILS
-                $location_result = get_branch_locations();
-                ?>
-
-                <div class="form-group">
-
-                    <div class="form_labels">Home Library</div>
-                    <div class="dropdown">
-                        <select class="form-control input-small" name="homelibrary" autocomplete="mpl_homelibrary_v1.0" style="height: 46px;" id="homelibrary" style="margin-bottom: 10px">
-                            <?php
-                            // iterate through the branch array from the function above and put them into a drop down list
-                            while ($row = pg_fetch_array($location_result)) {
-                                echo '<option value="' . $row[0] . '"';
-                                if($row[0] == 'm'){ echo 'selected';}
-                                echo '>' . $row[1] . '</option>';
-                                lb();
-                            }
-                            ?>
-                        </select>
-                    </div>
-                </div>
-
-
-                <?php
-                // get the value of PCODE2 from the ILS via the API.  At MPL we use it for languages spoken in the home
-                $pcode2_result = get_iii_pcode2();?>
-                <div class="form-group">
-
-                    <div class="form_labels">Additional Language Spoken in the Home</div>
-                    <div class="dropdown">
-                        <select class="form-control input-small" name="pcode2" autocomplete="mpl_lang1_v1.0" style="height: 46px;" id="pcode2" style="margin-bottom: 10px">
-                            <?php
-                            // iterate through the data and create a drop down list.
-                            while ($row = pg_fetch_array($pcode2_result)) {
-                                echo '<option value="' . $row[0] . '">';
-                                if($row[1] == '---') {
-                                    echo 'None';
-                                }
-                                else {
-                                    echo $row[1];
-                                }
-                                echo '</option>';
-                                lb();
-                            }
-                            ?>
-                        </select>
-                    </div>
-
-                </div>
-
-                <?php $pcode3_result = get_iii_pcode3();?>
-                <div class="form-group">
-
-                    <div class="form_labels">Additional Language Spoken in the Home</div>
-                    <div class="dropdown">
-                        <select class="form-control input-small" name="pcode3" autocomplete="mpl_lang2_v1.0" style="height: 46px;" id="pcode3" style="margin-bottom: 10px">
-                            <?php
-                            while ($row = pg_fetch_array($pcode3_result)) {
-                                echo '<option value="' . $row[0] . '">' . $row[1] . '</option>';
-                                lb();
-                            }
-                            ?>
-                            <option value="0"selected>None</option>
-                        </select>
-                    </div>
-
-                </div>
-
-
-
-
                 <input type="button" name="previous" class="previous action-button-previous" value="Previous"/>
 
                 <input type="submit" name="submit" class="submit action-button" value="Submit"/>
-
-            </fieldset>
-
 
 
             <!-- link to designify.me code snippets -->
@@ -296,6 +215,11 @@ if(!isset($_SESSION['notabot'])) {
         });
     });
 </script>
+
+
+</body>
+
+
 
 </body>
 </html>

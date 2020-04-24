@@ -46,11 +46,19 @@ session_destroy();
             <h4>Please note - if you already have a MPL library card you don't need to sign up for an e-card.  Your library card already has access to all of MPL's <a href="https://www.beinspiredatmpl.ca/bmm/bmmm-online-library">amazing electronic resources.</a></h4>
 
             <form action="form.php" id="loginpage" method="post">
-                <center><button class="g-recaptcha button" data-sitekey="6LfrpscUAAAAAKI5AZQ96f6jCXnNlqrCRMouTFkM" data-callback='onSubmit'>Get Started Now</button></center>
+                <?php if(useRecaptcha == '1') { ?>
+                    <center><button class="g-recaptcha button" data-sitekey="<?php echo recaptchaSiteKey; ?>" data-callback='onSubmit'>Get Started Now</button></center>
+                <?php } ?>
+                <?php if (useRecaptcha == '0') { ?>
+                    <center><button class="button">Get Started Now</button></center>
+                <?php } ?>
+
+
             </form></div>
         <div class="col-xs-1"></div>
     </div>
 </div>
 
 </body>
+
 </html>
