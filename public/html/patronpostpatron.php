@@ -117,7 +117,7 @@ header('Location: \index.php');
          if(verifyCatchment == '1') {
              // Patron address has been verified as an actual address.  check to see that they fall inside the catchment area.  IF they don't redirect to a page explaining card policy.
              if (!isPatronInsideCatchmentArea($myAddress)) {
-                 header('Location: https://www.google.ca'); // set this to a url of a page that explains your policies on who can get a card.
+                 header('Location: ' . catchmentFailedRedirectPage); // set this to a url of a page that explains your policies on who can get a card.
                  die();
              }
          }

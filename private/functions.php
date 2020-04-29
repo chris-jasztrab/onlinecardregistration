@@ -1876,7 +1876,7 @@ function initializeBarcodeFile()
      // File does ! not exist so create it an initialize it with the starting barcode.
      //echo 'file did not exist';
      if(startingBarcodeNumber == '') {
-       echo 'Starting Barcode has not been defined in the config.php file.  Please update the config.php file with all required details before running the app';
+       echo 'Starting barcode is currently ' . startingBarcodeNumber . ' and has not been defined in the config.php file.  Please update the config.php file with all required details before running the app';
        die();
      }
      $writefile = fopen('../../private/currentbarcode.txt', "w");
@@ -2998,7 +2998,7 @@ function updatePatronPIN($patronID, $pin) {
 }
 
 function createOnlinePatron($patronArrayObj) {
-  $randomPIN = generateRandomPIN(0,9,5);
+  $randomPIN = generateRandomPIN(0,9,minimumPinLength);
   $newBarcode = getNextBarcode();
   $yearFromToday = strtotime('+1 year');
   $expirationString = date('Y-m-d', $yearFromToday);

@@ -30,6 +30,18 @@ define('patronTypeNumber' , '7');
 // Only enter in 13 digits here as the last number is a check digit.
 define('startingBarcodeNumber', ''); // example 2138700900000
 
+// Either CA or US (for now).  Used to change labels / form fields from Canadian or American
+define('localization', 'CA');
+
+// Short code for your state or province - used to default select the drop down in the application form.
+define('yourprovince', 'MB');
+
+// Sierra PIN length requirements
+// currently the code generates a 5 digit random number PIN.  The pin is created such that it won't trigger Sierra's non-trivial pin check
+// For instance it won't ever generate a PIN of 11111.  This is bad coding on their part because it reduces the number of pins an attacker needs to try
+// but i'm not iii so there's that!
+define('minimumPinLength', '6');
+
 // END OF REQUIRED SETTINGS
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -58,6 +70,10 @@ define ('verifyAddress', '1');
 
 //if you want to ensure that patrons are within your boudaries set this to 1.  You must also provide lat/long for the boundaries below in the catchment area
 define ('verifyCatchment', '1');
+
+// If the patron is not within your catchment area and the catchment flag above is set to 1 they will be redirected to this page
+// This page should explain who can get a card for your library.
+define ('catchmentFailedRedirectPage', 'https://www.google.ca');
 
 // String showed to patrons when they are allowed to renew
 define("permitRenew", "You can use this form to update your library card's expiration date if you're within three weeks of expiration.  Please take a moment to verify your address below.");
