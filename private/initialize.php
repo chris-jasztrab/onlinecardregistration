@@ -8,7 +8,7 @@
   include('functions.php');
   include('phpqrcode.php');
   include('barcode39.php');
-  initializeBarcodeFile();
+  configFileCheck();
   setApiAccessToken();
   $errors = [];
   ?>

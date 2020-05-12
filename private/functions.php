@@ -1870,8 +1870,10 @@ function delLineFromFile($fileName, $lineNum){
  return true;
  }
 
-function initializeBarcodeFile()
+function initializeBarcodeFile($startingBarcode)
  {
+   $barcodeLength = strlen($startingBarcode);
+   $barcodeLessOne = substr($startingBarcode, 0, $barcodeLength - 1);
    if (!file_exists('../../private/currentbarcode.txt')) {
      // File does ! not exist so create it an initialize it with the starting barcode.
      //echo 'file did not exist';
@@ -1881,12 +1883,83 @@ function initializeBarcodeFile()
      }
      $writefile = fopen('../../private/currentbarcode.txt', "w");
      if (flock($writefile, LOCK_EX)) {
-       fwrite($writefile, startingBarcodeNumber);
+       fwrite($writefile, $barcodeLessOne);
        flock($writefile, LOCK_UN);
      }
      fclose($writefile);
    }
  }
+
+function configFileCheck()
+{
+  if (!file_exists('../../private/config.php')) {
+    // File does ! not exist so redirect to the install page.
+    header('Location: install.php');
+    die();
+  }
+}
+
+function initializeConfigFile($providedConfig) {
+  if (!file_exists('../../private/config.php')) {
+
+    // File does ! not exist so create it and initialize it with the configuration provided.
+    //echo 'file did not exist';
+    $library_name = "define('institutionName', '" . $providedConfig['library_name'] . "');";
+    $appserver_name = "define('appServer', '" . $providedConfig['appserver_name'] . "');";
+    $api_key = "define('apiKey', '" . $providedConfig['api_key'] . "');";
+    $api_secret = "define('apiSecret', '" . $providedConfig['api_secret'] . "');";
+    $api_ver = "define('apiVer', '" . $providedConfig['api_ver'] . "');";
+    $country = "define('localization', '" . $providedConfig['country'] . "');";
+    $pinlength = "define('minimumPinLength', '" . $providedConfig['pinlength'] . "');";
+    $startbarcode = "define('startingBarcodeNumber', '" . $providedConfig['startbarcode'] . "');";
+    $barcodeprefix = "define('barcodePrefix', '" . $providedConfig['barcodeprefix'] . "');";
+    $use_recaptcha = "define('useRecaptcha', '" . $providedConfig['use_recaptcha'] . "');";
+    $recaptcha_site = "define('recaptchaSiteKey', '" . $providedConfig['recaptcha_site'] . "');";
+    $recaptcha_secret = "define('recaptchaSecretKey', '" . $providedConfig['recaptcha_secret'] . "');";
+    $google_analytics = "define('useGoogleAnalytics', '" . $providedConfig['google_analytics'] . "');";
+    $ga_property = "define('googleAnalyticsID', '" . $providedConfig['ga_property'] . "');";
+    $address_verification = "define('verifyAddress', '" . $providedConfig['address_verification'] . "');";
+    $bing_key = "define('bingMapsKey', '" . $providedConfig['bing_key'] . "');";
+    $verify_catchment = "define('verifyCatchment', '" . $providedConfig['verify_catchment'] . "');";
+    $catchment_fail = "define('catchmentFailedRedirectPage', '" . $providedConfig['catchment_fail'] . "');";
+    $your_province = "define('yourprovince', '" . $providedConfig['yourprovince'] . "');";
+    $patronTypeNumber = "define('patronTypeNumber', '" . $providedConfig['patrontypenumber'] . "');";
+    $patronStatsSecret = "define('patronStatsSecret', '" . $providedConfig['patronStatsSecret'] . "');";
+    $mailFrom = "define('mailFrom', '" . $providedConfig['mailFrom'] . "');";
+
+    $writefile = fopen('../../private/config.php', "w");
+    if(!$writefile) { echo 'could not open file for writing'; }
+      fwrite($writefile, '<?php' . PHP_EOL);
+      fwrite($writefile, $library_name . PHP_EOL);
+      fwrite($writefile, $appserver_name . PHP_EOL);
+      fwrite($writefile, $api_key . PHP_EOL);
+    fwrite($writefile, $api_ver . PHP_EOL);
+    fwrite($writefile, $api_secret . PHP_EOL);
+    fwrite($writefile, $country . PHP_EOL);
+    fwrite($writefile, $pinlength . PHP_EOL);
+    fwrite($writefile, $startbarcode . PHP_EOL);
+    fwrite($writefile, $barcodeprefix . PHP_EOL);
+    fwrite($writefile, $use_recaptcha . PHP_EOL);
+    fwrite($writefile, $recaptcha_site . PHP_EOL);
+    fwrite($writefile, $recaptcha_secret . PHP_EOL);
+    fwrite($writefile, $google_analytics . PHP_EOL);
+    fwrite($writefile, $ga_property . PHP_EOL);
+    fwrite($writefile, $address_verification . PHP_EOL);
+    fwrite($writefile, $bing_key . PHP_EOL);
+    fwrite($writefile, $verify_catchment . PHP_EOL);
+    fwrite($writefile, $catchment_fail . PHP_EOL);
+    fwrite($writefile, $your_province . PHP_EOL);
+    fwrite($writefile, $patronTypeNumber . PHP_EOL);
+    fwrite($writefile, $patronStatsSecret . PHP_EOL);
+    fwrite($writefile, $mailFrom . PHP_EOL);
+    fwrite($writefile, '?>' . PHP_EOL);
+
+
+      //fwrite($writefile, 'this is a test');
+    fclose($writefile);
+  }
+
+}
 
 function getNextLibraryCard() {
   $cardlist = fopen('cards.txt', 'r') or die("Unable to open file");
@@ -2349,7 +2422,7 @@ function get_branch_locations() {
     } else {
         return 'Connection status bad';
     }
-  $query = "  Select
+  $query = "Select
         sierra_view.location.code,
         sierra_view.location_name.name
     From
@@ -3076,6 +3149,21 @@ function createOnlinePatron($patronArrayObj) {
 
 }
 
+function getSierraAPIVersion() {
+  // function to parse out the API version from the sierra about page and return it to the user
+  $appServerURL = 'https://' . appServer . '/iii/sierra-api/about';
+  $html = file_get_contents($appServerURL);
+  $versionNumber = substr($html,strpos($html,': ', strpos($html,'Version')) + 2, strpos($html,'<',strpos($html,': ', strpos($html,'Version')))-strpos($html,': ', strpos($html,'Version')));
+  return $versionNumber;
+}
+
+function checkAPIVersion() {
+  $sierraVersion = getSierraAPIVersion();
+  $versionFloat = floatval($sierraVersion);
+  if($versionFloat > 5) { return true; }
+  else {return false;}
+}
+
 function createLibraryCardImage($nextbarcode) {
   $bc = new Barcode39($nextbarcode);
   // set text size
@@ -3100,11 +3188,12 @@ function createLibraryCardImage($nextbarcode) {
 }
 
 function delete_oldfiles($dir,$secs,$pattern = "/*")
-{
-  //delete files in folder based on path and patterns
-  $now = time();
-  foreach(glob("$dir$pattern") as $f) {
-    if (is_file($f) && ($now - filemtime($f) > $secs)) unlink($f);
+{  $now = time();
+
+  foreach(glob("$dir$pattern*") as $f) {
+    if (is_file($f) && ($now - filemtime($f) > $secs)) {
+      unlink($f);
+    }
   }
 }
 

@@ -852,7 +852,7 @@ header('Location: \index.php');
 
  $email = new PHPMailer();
  $email->IsHTML(true);
- $email->SetFrom('registration@beinspiredatmpl.ca', 'Milton Public Library'); //Name is optional
+ $email->SetFrom(mailFrom, 'Milton Public Library'); //Name is optional
  $email->Subject   = 'Welcome to MPL!';
  $email->Body      = $bodytext;
  $email->AddAddress($post_email);

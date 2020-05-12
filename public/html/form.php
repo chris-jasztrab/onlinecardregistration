@@ -94,7 +94,7 @@ if(useRecaptcha == '1') {
                 <input type="text" name="street" placeholder="" autocomplete="mpl_street_v1.0" style="margin-bottom: 10px"/>
                 <div class="form_labels">Town or City</div>
                 <input type="text" name="city" placeholder="" autocomplete="mpl_city_v1.0" style="margin-bottom: 10px"/>
-                <div class="form_labels"><?php if(localization == 'CA') { ?> Province <?php } ?> <?php if(localization == 'US') { ?> State <?php } ?>  </div>
+                <div class="form_labels"><?php if(localization == 'CA') { ?> Province <?php } ?> <?php if(localization == 'US') { ?> State <?php } ?> </div>
                 <div class="form-group">
                     <div class="dropdown">
                         <select class="form-control input-small" name="province" autocomplete="mpl_province_v1.0" style="height: 50px" id="province" style="margin-bottom: 10px">
@@ -290,6 +290,5 @@ if(useRecaptcha == '1') {
 // as part of the patron creation process we are actually creating a library card with a barcode and background image
 // this gets created and rendered on the server, then shown to the patron and emailed to them.  The function below
 // cleans up these files and erases ones that are over 2 hours old.
-
-delete_oldfiles('/var/www/html/onlinecardregistration/html/', 86400, '21387*');
+delete_oldfiles('../../private/', 86400, barcodePrefix);
 ?>
