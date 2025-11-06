@@ -1900,65 +1900,55 @@ function configFileCheck()
 }
 
 function initializeConfigFile($providedConfig) {
-  if (!file_exists('../../private/config.php')) {
-
-    // File does ! not exist so create it and initialize it with the configuration provided.
-    //echo 'file did not exist';
-    $library_name = "define('institutionName', '" . $providedConfig['library_name'] . "');";
-    $appserver_name = "define('appServer', '" . $providedConfig['appserver_name'] . "');";
-    $api_key = "define('apiKey', '" . $providedConfig['api_key'] . "');";
-    $api_secret = "define('apiSecret', '" . $providedConfig['api_secret'] . "');";
-    $api_ver = "define('apiVer', '" . $providedConfig['api_ver'] . "');";
-    $country = "define('localization', '" . $providedConfig['country'] . "');";
-    $pinlength = "define('minimumPinLength', '" . $providedConfig['pinlength'] . "');";
-    $startbarcode = "define('startingBarcodeNumber', '" . $providedConfig['startbarcode'] . "');";
-    $barcodeprefix = "define('barcodePrefix', '" . $providedConfig['barcodeprefix'] . "');";
-    $use_recaptcha = "define('useRecaptcha', '" . $providedConfig['use_recaptcha'] . "');";
-    $recaptcha_site = "define('recaptchaSiteKey', '" . $providedConfig['recaptcha_site'] . "');";
-    $recaptcha_secret = "define('recaptchaSecretKey', '" . $providedConfig['recaptcha_secret'] . "');";
-    $google_analytics = "define('useGoogleAnalytics', '" . $providedConfig['google_analytics'] . "');";
-    $ga_property = "define('googleAnalyticsID', '" . $providedConfig['ga_property'] . "');";
-    $address_verification = "define('verifyAddress', '" . $providedConfig['address_verification'] . "');";
-    $bing_key = "define('bingMapsKey', '" . $providedConfig['bing_key'] . "');";
-    $verify_catchment = "define('verifyCatchment', '" . $providedConfig['verify_catchment'] . "');";
-    $catchment_fail = "define('catchmentFailedRedirectPage', '" . $providedConfig['catchment_fail'] . "');";
-    $your_province = "define('yourprovince', '" . $providedConfig['yourprovince'] . "');";
-    $patronTypeNumber = "define('patronTypeNumber', '" . $providedConfig['patrontypenumber'] . "');";
-    $patronStatsSecret = "define('patronStatsSecret', '" . $providedConfig['patronStatsSecret'] . "');";
-    $mailFrom = "define('mailFrom', '" . $providedConfig['mailFrom'] . "');";
-
-    $writefile = fopen('../../private/config.php', "w");
-    if(!$writefile) { echo 'could not open file for writing'; }
-      fwrite($writefile, '<?php' . PHP_EOL);
-      fwrite($writefile, $library_name . PHP_EOL);
-      fwrite($writefile, $appserver_name . PHP_EOL);
-      fwrite($writefile, $api_key . PHP_EOL);
-    fwrite($writefile, $api_ver . PHP_EOL);
-    fwrite($writefile, $api_secret . PHP_EOL);
-    fwrite($writefile, $country . PHP_EOL);
-    fwrite($writefile, $pinlength . PHP_EOL);
-    fwrite($writefile, $startbarcode . PHP_EOL);
-    fwrite($writefile, $barcodeprefix . PHP_EOL);
-    fwrite($writefile, $use_recaptcha . PHP_EOL);
-    fwrite($writefile, $recaptcha_site . PHP_EOL);
-    fwrite($writefile, $recaptcha_secret . PHP_EOL);
-    fwrite($writefile, $google_analytics . PHP_EOL);
-    fwrite($writefile, $ga_property . PHP_EOL);
-    fwrite($writefile, $address_verification . PHP_EOL);
-    fwrite($writefile, $bing_key . PHP_EOL);
-    fwrite($writefile, $verify_catchment . PHP_EOL);
-    fwrite($writefile, $catchment_fail . PHP_EOL);
-    fwrite($writefile, $your_province . PHP_EOL);
-    fwrite($writefile, $patronTypeNumber . PHP_EOL);
-    fwrite($writefile, $patronStatsSecret . PHP_EOL);
-    fwrite($writefile, $mailFrom . PHP_EOL);
-    fwrite($writefile, '?>' . PHP_EOL);
-
-
-      //fwrite($writefile, 'this is a test');
-    fclose($writefile);
+  if (file_exists('../../private/config.php')) {
+    return;
   }
 
+  // File does ! not exist so create it and initialize it with the configuration provided.
+  $buildDefine = static function($name, $value) {
+    $sanitizedValue = ($value === null) ? '' : $value;
+    return "define('{$name}', " . var_export($sanitizedValue, true) . ");";
+  };
+
+  $configMap = [
+    'institutionName' => 'library_name',
+    'appServer' => 'appserver_name',
+    'apiKey' => 'api_key',
+    'apiVer' => 'api_ver',
+    'apiSecret' => 'api_secret',
+    'localization' => 'country',
+    'minimumPinLength' => 'pinlength',
+    'startingBarcodeNumber' => 'startbarcode',
+    'barcodePrefix' => 'barcodeprefix',
+    'useRecaptcha' => 'use_recaptcha',
+    'recaptchaSiteKey' => 'recaptcha_site',
+    'recaptchaSecretKey' => 'recaptcha_secret',
+    'useGoogleAnalytics' => 'google_analytics',
+    'googleAnalyticsID' => 'ga_property',
+    'verifyAddress' => 'address_verification',
+    'bingMapsKey' => 'bing_key',
+    'verifyCatchment' => 'verify_catchment',
+    'catchmentFailedRedirectPage' => 'catchment_fail',
+    'yourprovince' => 'yourprovince',
+    'patronTypeNumber' => 'patrontypenumber',
+    'patronStatsSecret' => 'patronStatsSecret',
+    'mailFrom' => 'mailFrom'
+  ];
+
+  $configLines = ['<?php'];
+
+  foreach ($configMap as $constantName => $configKey) {
+    $value = $providedConfig[$configKey] ?? '';
+    $configLines[] = $buildDefine($constantName, $value);
+  }
+
+  $configLines[] = '?>';
+
+  $configContents = implode(PHP_EOL, $configLines) . PHP_EOL;
+
+  if (file_put_contents('../../private/config.php', $configContents) === false) {
+    echo 'could not open file for writing';
+  }
 }
 
 function getNextLibraryCard() {
