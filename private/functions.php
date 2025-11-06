@@ -105,6 +105,151 @@ function is_get_request() {
     return $_SERVER['REQUEST_METHOD'] == 'GET';
 }
 
+function getLocalizationSettings() {
+    $configuredLocalization = defined('localization') ? localization : 'CA';
+
+    $settings = [
+        'CA' => [
+            'country_code' => 'CA',
+            'subdivision_label' => 'Province',
+            'postal_label' => 'Postal Code',
+            'postal_pattern' => '[A-Za-z][0-9][A-Za-z] [0-9][A-Za-z][0-9]',
+            'postal_title' => 'Format: A1A 1A1',
+            'subdivisions' => [
+                'AB' => 'Alberta',
+                'BC' => 'British Columbia',
+                'MB' => 'Manitoba',
+                'NB' => 'New Brunswick',
+                'NL' => 'Newfoundland and Labrador',
+                'NT' => 'Northwest Territories',
+                'NS' => 'Nova Scotia',
+                'NU' => 'Nunavut',
+                'ON' => 'Ontario',
+                'PE' => 'Prince Edward Island',
+                'QC' => 'Quebec',
+                'SK' => 'Saskatchewan',
+                'YT' => 'Yukon',
+            ],
+        ],
+        'US' => [
+            'country_code' => 'US',
+            'subdivision_label' => 'State',
+            'postal_label' => 'Zip Code',
+            'postal_pattern' => '\\d{5}(?:-\\d{4})?',
+            'postal_title' => 'Format: 12345 or 12345-6789',
+            'subdivisions' => [
+                'AL' => 'Alabama',
+                'AK' => 'Alaska',
+                'AZ' => 'Arizona',
+                'AR' => 'Arkansas',
+                'CA' => 'California',
+                'CO' => 'Colorado',
+                'CT' => 'Connecticut',
+                'DE' => 'Delaware',
+                'DC' => 'District Of Columbia',
+                'FL' => 'Florida',
+                'GA' => 'Georgia',
+                'HI' => 'Hawaii',
+                'ID' => 'Idaho',
+                'IL' => 'Illinois',
+                'IN' => 'Indiana',
+                'IA' => 'Iowa',
+                'KS' => 'Kansas',
+                'KY' => 'Kentucky',
+                'LA' => 'Louisiana',
+                'ME' => 'Maine',
+                'MD' => 'Maryland',
+                'MA' => 'Massachusetts',
+                'MI' => 'Michigan',
+                'MN' => 'Minnesota',
+                'MS' => 'Mississippi',
+                'MO' => 'Missouri',
+                'MT' => 'Montana',
+                'NE' => 'Nebraska',
+                'NV' => 'Nevada',
+                'NH' => 'New Hampshire',
+                'NJ' => 'New Jersey',
+                'NM' => 'New Mexico',
+                'NY' => 'New York',
+                'NC' => 'North Carolina',
+                'ND' => 'North Dakota',
+                'OH' => 'Ohio',
+                'OK' => 'Oklahoma',
+                'OR' => 'Oregon',
+                'PA' => 'Pennsylvania',
+                'RI' => 'Rhode Island',
+                'SC' => 'South Carolina',
+                'SD' => 'South Dakota',
+                'TN' => 'Tennessee',
+                'TX' => 'Texas',
+                'UT' => 'Utah',
+                'VT' => 'Vermont',
+                'VA' => 'Virginia',
+                'WA' => 'Washington',
+                'WV' => 'West Virginia',
+                'WI' => 'Wisconsin',
+                'WY' => 'Wyoming',
+            ],
+        ],
+    ];
+
+    return $settings[$configuredLocalization] ?? $settings['CA'];
+}
+
+function getSubdivisionLabel() {
+    $settings = getLocalizationSettings();
+    return $settings['subdivision_label'];
+}
+
+function getPostalLabel() {
+    $settings = getLocalizationSettings();
+    return $settings['postal_label'];
+}
+
+function getPostalPattern() {
+    $settings = getLocalizationSettings();
+    return $settings['postal_pattern'];
+}
+
+function getPostalTitle() {
+    $settings = getLocalizationSettings();
+    return $settings['postal_title'];
+}
+
+function getLocalizationCountryCode() {
+    $settings = getLocalizationSettings();
+    return $settings['country_code'];
+}
+
+function renderSubdivisionOptions($selectedSubdivision = '') {
+    $settings = getLocalizationSettings();
+    $selectedValue = $selectedSubdivision !== ''
+        ? $selectedSubdivision
+        : (defined('yourprovince') ? yourprovince : '');
+
+    $options = [];
+    foreach ($settings['subdivisions'] as $value => $label) {
+        $isSelected = ($value === $selectedValue) ? ' selected' : '';
+        $options[] = sprintf(
+            '<option value="%s"%s>%s</option>',
+            htmlspecialchars($value, ENT_QUOTES, 'UTF-8'),
+            $isSelected,
+            htmlspecialchars($label, ENT_QUOTES, 'UTF-8')
+        );
+    }
+
+    return implode("\n", $options);
+}
+
+function normalize_form_value($value, $uppercase = false) {
+    $normalized = trim((string)($value ?? ''));
+    if ($uppercase) {
+        $normalized = strtoupper($normalized);
+    }
+
+    return $normalized;
+}
+
 function pre($data) {
     print '<pre>' . print_r($data, true) . '</pre>';
 }
@@ -1900,70 +2045,55 @@ function configFileCheck()
 }
 
 function initializeConfigFile($providedConfig) {
-  if (!file_exists('../../private/config.php')) {
-
-    // File does ! not exist so create it and initialize it with the configuration provided.
-    //echo 'file did not exist';
-    $buildDefine = function($name, $value) {
-      $sanitizedValue = ($value === null) ? '' : $value;
-      return "define('{$name}', " . var_export($sanitizedValue, true) . ");";
-    };
-
-    $library_name = $buildDefine('institutionName', $providedConfig['library_name']);
-    $appserver_name = $buildDefine('appServer', $providedConfig['appserver_name']);
-    $api_key = $buildDefine('apiKey', $providedConfig['api_key']);
-    $api_secret = $buildDefine('apiSecret', $providedConfig['api_secret']);
-    $api_ver = $buildDefine('apiVer', $providedConfig['api_ver']);
-    $country = $buildDefine('localization', $providedConfig['country']);
-    $pinlength = $buildDefine('minimumPinLength', $providedConfig['pinlength']);
-    $startbarcode = $buildDefine('startingBarcodeNumber', $providedConfig['startbarcode']);
-    $barcodeprefix = $buildDefine('barcodePrefix', $providedConfig['barcodeprefix']);
-    $use_recaptcha = $buildDefine('useRecaptcha', $providedConfig['use_recaptcha']);
-    $recaptcha_site = $buildDefine('recaptchaSiteKey', $providedConfig['recaptcha_site']);
-    $recaptcha_secret = $buildDefine('recaptchaSecretKey', $providedConfig['recaptcha_secret']);
-    $google_analytics = $buildDefine('useGoogleAnalytics', $providedConfig['google_analytics']);
-    $ga_property = $buildDefine('googleAnalyticsID', $providedConfig['ga_property']);
-    $address_verification = $buildDefine('verifyAddress', $providedConfig['address_verification']);
-    $bing_key = $buildDefine('bingMapsKey', $providedConfig['bing_key']);
-    $verify_catchment = $buildDefine('verifyCatchment', $providedConfig['verify_catchment']);
-    $catchment_fail = $buildDefine('catchmentFailedRedirectPage', $providedConfig['catchment_fail']);
-    $your_province = $buildDefine('yourprovince', $providedConfig['yourprovince']);
-    $patronTypeNumber = $buildDefine('patronTypeNumber', $providedConfig['patrontypenumber']);
-    $patronStatsSecret = $buildDefine('patronStatsSecret', $providedConfig['patronStatsSecret']);
-    $mailFrom = $buildDefine('mailFrom', $providedConfig['mailFrom']);
-
-    $writefile = fopen('../../private/config.php', "w");
-    if(!$writefile) { echo 'could not open file for writing'; }
-      fwrite($writefile, '<?php' . PHP_EOL);
-      fwrite($writefile, $library_name . PHP_EOL);
-      fwrite($writefile, $appserver_name . PHP_EOL);
-      fwrite($writefile, $api_key . PHP_EOL);
-    fwrite($writefile, $api_ver . PHP_EOL);
-    fwrite($writefile, $api_secret . PHP_EOL);
-    fwrite($writefile, $country . PHP_EOL);
-    fwrite($writefile, $pinlength . PHP_EOL);
-    fwrite($writefile, $startbarcode . PHP_EOL);
-    fwrite($writefile, $barcodeprefix . PHP_EOL);
-    fwrite($writefile, $use_recaptcha . PHP_EOL);
-    fwrite($writefile, $recaptcha_site . PHP_EOL);
-    fwrite($writefile, $recaptcha_secret . PHP_EOL);
-    fwrite($writefile, $google_analytics . PHP_EOL);
-    fwrite($writefile, $ga_property . PHP_EOL);
-    fwrite($writefile, $address_verification . PHP_EOL);
-    fwrite($writefile, $bing_key . PHP_EOL);
-    fwrite($writefile, $verify_catchment . PHP_EOL);
-    fwrite($writefile, $catchment_fail . PHP_EOL);
-    fwrite($writefile, $your_province . PHP_EOL);
-    fwrite($writefile, $patronTypeNumber . PHP_EOL);
-    fwrite($writefile, $patronStatsSecret . PHP_EOL);
-    fwrite($writefile, $mailFrom . PHP_EOL);
-    fwrite($writefile, '?>' . PHP_EOL);
-
-
-      //fwrite($writefile, 'this is a test');
-    fclose($writefile);
+  if (file_exists('../../private/config.php')) {
+    return;
   }
 
+  // File does ! not exist so create it and initialize it with the configuration provided.
+  $buildDefine = static function($name, $value) {
+    $sanitizedValue = ($value === null) ? '' : $value;
+    return "define('{$name}', " . var_export($sanitizedValue, true) . ");";
+  };
+
+  $configMap = [
+    'institutionName' => 'library_name',
+    'appServer' => 'appserver_name',
+    'apiKey' => 'api_key',
+    'apiVer' => 'api_ver',
+    'apiSecret' => 'api_secret',
+    'localization' => 'country',
+    'minimumPinLength' => 'pinlength',
+    'startingBarcodeNumber' => 'startbarcode',
+    'barcodePrefix' => 'barcodeprefix',
+    'useRecaptcha' => 'use_recaptcha',
+    'recaptchaSiteKey' => 'recaptcha_site',
+    'recaptchaSecretKey' => 'recaptcha_secret',
+    'useGoogleAnalytics' => 'google_analytics',
+    'googleAnalyticsID' => 'ga_property',
+    'verifyAddress' => 'address_verification',
+    'bingMapsKey' => 'bing_key',
+    'verifyCatchment' => 'verify_catchment',
+    'catchmentFailedRedirectPage' => 'catchment_fail',
+    'yourprovince' => 'yourprovince',
+    'patronTypeNumber' => 'patrontypenumber',
+    'patronStatsSecret' => 'patronStatsSecret',
+    'mailFrom' => 'mailFrom'
+  ];
+
+  $configLines = ['<?php'];
+
+  foreach ($configMap as $constantName => $configKey) {
+    $value = $providedConfig[$configKey] ?? '';
+    $configLines[] = $buildDefine($constantName, $value);
+  }
+
+  $configLines[] = '?>';
+
+  $configContents = implode(PHP_EOL, $configLines) . PHP_EOL;
+
+  if (file_put_contents('../../private/config.php', $configContents) === false) {
+    echo 'could not open file for writing';
+  }
 }
 
 function getNextLibraryCard() {

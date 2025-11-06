@@ -20,6 +20,12 @@ if(useRecaptcha == '1') {
         header('Location: index.php');
     }
 }
+
+$postalLabel = getPostalLabel();
+$postalPattern = getPostalPattern();
+$postalTitle = getPostalTitle();
+$subdivisionLabel = getSubdivisionLabel();
+$defaultSubdivision = defined('yourprovince') ? yourprovince : '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -83,94 +89,28 @@ if(useRecaptcha == '1') {
 
 
                 <h2 class="fs-title">Address</h2>
-                <?php if(localization == 'CA') { ?>
-                    <h3 class="fs-subtitle"><?php if(localization == 'CA') { ?> Please provide your address and postal code <?php } ?><?php if(localization == 'US') { ?> Please provide your address and zip code <?php } ?></h3>
-                <?php } ?>
-                <?php if(localization == 'US') { ?>
-                    <h3 class="fs-subtitle">Please provide your address and zip code</h3>
-                <?php } ?>
+                <h3 class="fs-subtitle">Please provide your address and <?php echo htmlspecialchars(strtolower($postalLabel), ENT_QUOTES, 'UTF-8'); ?></h3>
 
                 <div class="form_labels">Street Address</div>
                 <input type="text" name="street" placeholder="" autocomplete="mpl_street_v1.0" style="margin-bottom: 10px"/>
                 <div class="form_labels">Town or City</div>
                 <input type="text" name="city" placeholder="" autocomplete="mpl_city_v1.0" style="margin-bottom: 10px"/>
-                <div class="form_labels"><?php if(localization == 'CA') { ?> Province <?php } ?> <?php if(localization == 'US') { ?> State <?php } ?> </div>
+                <div class="form_labels"><?php echo htmlspecialchars($subdivisionLabel, ENT_QUOTES, 'UTF-8'); ?></div>
                 <div class="form-group">
                     <div class="dropdown">
                         <select class="form-control input-small" name="province" autocomplete="mpl_province_v1.0" style="height: 50px" id="province" style="margin-bottom: 10px">
-                            <?php if(localization == 'CA') { ?>
-                                <option value="AB"<?php if(yourprovince == 'AB') {echo "selected";}?>>Alberta</option>
-                                <option value="BC"<?php if(yourprovince == 'BC') {echo "selected";}?>>British Columbia</option>
-                                <option value="MB"<?php if(yourprovince == 'MB') {echo "selected";}?>>Manitoba</option>
-                                <option value="NB"<?php if(yourprovince == 'NB') {echo "selected";}?>>New Brunswick</option>
-                                <option value="NL"<?php if(yourprovince == 'NL') {echo "selected";}?>>Newfoundland and Labrador</option>
-                                <option value="NT"<?php if(yourprovince == 'NT') {echo "selected";}?>>Northwest Territories</option>
-                                <option value="NS"<?php if(yourprovince == 'NS') {echo "selected";}?>>Nova Scotia</option>
-                                <option value="NU"<?php if(yourprovince == 'NU') {echo "selected";}?>>Nunavut</option>
-                                <option value="ON"<?php if(yourprovince == 'ON') {echo "selected";}?>>Ontario</option>
-                                <option value="PE"<?php if(yourprovince == 'PE') {echo "selected";}?>Prince Edward Island</option>
-                                <option value="QC"<?php if(yourprovince == 'QC') {echo "selected";}?>>Quebec</option>
-                                <option value="SK"<?php if(yourprovince == 'SK') {echo "selected";}?>>Saskatchewan</option>
-                                <option value="YT"<?php if(yourprovince == 'YT') {echo "selected";}?>>Yukon</option>
-                            <?php } ?>
-                            <?php if(localization == 'US') { ?>
-                                <option value="AL"<?php if(yourprovince == 'AL') {echo "selected";}?>>Alabama</option>
-                                <option value="AK"<?php if(yourprovince == 'AK') {echo "selected";}?>>Alaska</option>
-                                <option value="AZ"<?php if(yourprovince == 'AZ') {echo "selected";}?>>Arizona</option>
-                                <option value="AR"<?php if(yourprovince == 'AR') {echo "selected";}?>>Arkansas</option>
-                                <option value="CA"<?php if(yourprovince == 'CA') {echo "selected";}?>>California</option>
-                                <option value="CO"<?php if(yourprovince == 'CO') {echo "selected";}?>>Colorado</option>
-                                <option value="CT"<?php if(yourprovince == 'CT') {echo "selected";}?>>Connecticut</option>
-                                <option value="DE"<?php if(yourprovince == 'DE') {echo "selected";}?>>Delaware</option>
-                                <option value="DC"<?php if(yourprovince == 'DC') {echo "selected";}?>>District Of Columbia</option>
-                                <option value="FL"<?php if(yourprovince == 'FL') {echo "selected";}?>>Florida</option>
-                                <option value="GA"<?php if(yourprovince == 'GA') {echo "selected";}?>>Georgia</option>
-                                <option value="HI"<?php if(yourprovince == 'HI') {echo "selected";}?>>Hawaii</option>
-                                <option value="ID"<?php if(yourprovince == 'ID') {echo "selected";}?>>Idaho</option>
-                                <option value="IL"<?php if(yourprovince == 'IL') {echo "selected";}?>>Illinois</option>
-                                <option value="IN"<?php if(yourprovince == 'IN') {echo "selected";}?>>Indiana</option>
-                                <option value="IA"<?php if(yourprovince == 'IA') {echo "selected";}?>>Iowa</option>
-                                <option value="KS"<?php if(yourprovince == 'KS') {echo "selected";}?>>Kansas</option>
-                                <option value="KY"<?php if(yourprovince == 'KY') {echo "selected";}?>>Kentucky</option>
-                                <option value="LA"<?php if(yourprovince == 'LA') {echo "selected";}?>>Louisiana</option>
-                                <option value="ME"<?php if(yourprovince == 'ME') {echo "selected";}?>>Maine</option>
-                                <option value="MD"<?php if(yourprovince == 'MD') {echo "selected";}?>>Maryland</option>
-                                <option value="MA"<?php if(yourprovince == 'MA') {echo "selected";}?>>Massachusetts</option>
-                                <option value="MI"<?php if(yourprovince == 'MI') {echo "selected";}?>>Michigan</option>
-                                <option value="MN"<?php if(yourprovince == 'MN') {echo "selected";}?>>Minnesota</option>
-                                <option value="MS"<?php if(yourprovince == 'MS') {echo "selected";}?>>Mississippi</option>
-                                <option value="MO"<?php if(yourprovince == 'MO') {echo "selected";}?>>Missouri</option>
-                                <option value="MT"<?php if(yourprovince == 'MT') {echo "selected";}?>>Montana</option>
-                                <option value="NE"<?php if(yourprovince == 'NE') {echo "selected";}?>>Nebraska</option>
-                                <option value="NV"<?php if(yourprovince == 'NV') {echo "selected";}?>>Nevada</option>
-                                <option value="NH"<?php if(yourprovince == 'NH') {echo "selected";}?>>New Hampshire</option>
-                                <option value="NJ"<?php if(yourprovince == 'NJ') {echo "selected";}?>>New Jersey</option>
-                                <option value="NM"<?php if(yourprovince == 'NM') {echo "selected";}?>>New Mexico</option>
-                                <option value="NY"<?php if(yourprovince == 'NY') {echo "selected";}?>>New York</option>
-                                <option value="NC"<?php if(yourprovince == 'NC') {echo "selected";}?>>North Carolina</option>
-                                <option value="ND"<?php if(yourprovince == 'ND') {echo "selected";}?>>North Dakota</option>
-                                <option value="OH"<?php if(yourprovince == 'OH') {echo "selected";}?>>Ohio</option>
-                                <option value="OK"<?php if(yourprovince == 'OK') {echo "selected";}?>>Oklahoma</option>
-                                <option value="OR"<?php if(yourprovince == 'OR') {echo "selected";}?>>Oregon</option>
-                                <option value="PA"<?php if(yourprovince == 'PA') {echo "selected";}?>>Pennsylvania</option>
-                                <option value="RI"<?php if(yourprovince == 'RI') {echo "selected";}?>>Rhode Island</option>
-                                <option value="SC"<?php if(yourprovince == 'SC') {echo "selected";}?>>South Carolina</option>
-                                <option value="SD"<?php if(yourprovince == 'SD') {echo "selected";}?>>South Dakota</option>
-                                <option value="TN"<?php if(yourprovince == 'TN') {echo "selected";}?>>Tennessee</option>
-                                <option value="TX"<?php if(yourprovince == 'TX') {echo "selected";}?>>Texas</option>
-                                <option value="UT"<?php if(yourprovince == 'UT') {echo "selected";}?>>Utah</option>
-                                <option value="VT"<?php if(yourprovince == 'VT') {echo "selected";}?>>Vermont</option>
-                                <option value="VA"<?php if(yourprovince == 'VA') {echo "selected";}?>>Virginia</option>
-                                <option value="WA"<?php if(yourprovince == 'WA') {echo "selected";}?>>Washington</option>
-                                <option value="WV"<?php if(yourprovince == 'WV') {echo "selected";}?>>West Virginia</option>
-                                <option value="WI"<?php if(yourprovince == 'WI') {echo "selected";}?>>Wisconsin</option>
-                                <option value="WY"<?php if(yourprovince == 'WY') {echo "selected";}?>>Wyoming</option>
-                            <?php } ?>
+                            <?php echo renderSubdivisionOptions($defaultSubdivision); ?>
                         </select>
                     </div>
                 </div>
-                <div class="form_labels"><?php if(localization == 'CA') { ?> Postal Code <?php } ?><?php if(localization == 'US') { ?> Zip Code <?php } ?></div>
-                <input type="text" name="postalcode" placeholder="" autocomplete="mpl_postal_v1.0" style="margin-bottom: 10px"/>
+                <div class="form_labels"><?php echo htmlspecialchars($postalLabel, ENT_QUOTES, 'UTF-8'); ?></div>
+                <input type="text"
+                       name="postalcode"
+                       placeholder=""
+                       autocomplete="mpl_postal_v1.0"
+                       style="margin-bottom: 10px"
+                       pattern="<?php echo htmlspecialchars($postalPattern, ENT_QUOTES, 'UTF-8'); ?>"
+                       title="<?php echo htmlspecialchars($postalTitle, ENT_QUOTES, 'UTF-8'); ?>"/>
 
 
                 <h2 class="fs-title">Contact Information</h2>

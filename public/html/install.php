@@ -24,29 +24,36 @@ if(!extension_loaded('curl')) {
 
 
 if(is_post_request()) {
-    $barcodeprefix = substr($_POST['startbarcode'], 0, $_POST['barcodeprefix']);
-    $providedConfig['library_name'] = $_POST['library_name'];
-    $providedConfig['appserver_name'] = $_POST['appserver_name'];
-    $providedConfig['api_ver'] = '5';
-    $providedConfig['api_key'] = $_POST['api_key'];
-    $providedConfig['api_secret'] = $_POST['api_secret'];
-    $providedConfig['country'] = $_POST['country'];
-    $providedConfig['pinlength'] = $_POST['pinlength'];
-    $providedConfig['startbarcode'] = $_POST['startbarcode'];
-    $providedConfig['barcodeprefix'] = $barcodeprefix;
-    $providedConfig['use_recaptcha'] = $_POST['use_recaptcha'];
-    $providedConfig['recaptcha_site'] = $_POST['recaptcha_site'] ?? '';
-    $providedConfig['recaptcha_secret'] = $_POST['recaptcha_secret'] ?? '';
-    $providedConfig['google_analytics'] = $_POST['google_analytics'];
-    $providedConfig['ga_property'] = $_POST['ga_property'] ?? '';
-    $providedConfig['address_verification'] = $_POST['address_verification'];
-    $providedConfig['bing_key'] = $_POST['bing_key'] ?? '';
-    $providedConfig['verify_catchment'] = $_POST['verify_catchment'];
-    $providedConfig['catchment_fail'] = $_POST['catchment_fail'] ?? '';
-    $providedConfig['yourprovince'] = $_POST['provinceState'];
-    $providedConfig['patrontypenumber'] = $_POST['patrontypenumber'];
-    $providedConfig['patronStatsSecret'] = $_POST['patronStatsSecret'];
-    $providedConfig['mailFrom'] = $_POST['mailFrom'];
+    $providedConfig = ['api_ver' => '5'];
+
+    $postConfigMap = [
+        'library_name' => 'library_name',
+        'appserver_name' => 'appserver_name',
+        'api_key' => 'api_key',
+        'api_secret' => 'api_secret',
+        'country' => 'country',
+        'pinlength' => 'pinlength',
+        'startbarcode' => 'startbarcode',
+        'use_recaptcha' => 'use_recaptcha',
+        'recaptcha_site' => 'recaptcha_site',
+        'recaptcha_secret' => 'recaptcha_secret',
+        'google_analytics' => 'google_analytics',
+        'ga_property' => 'ga_property',
+        'address_verification' => 'address_verification',
+        'bing_key' => 'bing_key',
+        'verify_catchment' => 'verify_catchment',
+        'catchment_fail' => 'catchment_fail',
+        'patrontypenumber' => 'patrontypenumber',
+        'patronStatsSecret' => 'patronStatsSecret',
+        'mailFrom' => 'mailFrom',
+        'provinceState' => 'yourprovince'
+    ];
+
+    foreach ($postConfigMap as $postKey => $configKey) {
+        $providedConfig[$configKey] = $_POST[$postKey] ?? '';
+    }
+
+    $providedConfig['barcodeprefix'] = substr($providedConfig['startbarcode'], 0, $_POST['barcodeprefix'] ?? 0);
 
     initializeConfigFile($providedConfig);
     initializeBarcodeFile($_POST['startbarcode']);
