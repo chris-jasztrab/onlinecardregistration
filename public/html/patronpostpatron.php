@@ -184,7 +184,7 @@ header('Location: \index.php');
     <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
 
-    <script src="https://www.google.com/recaptcha/api.js?render=<?php echo captcha_site_key; ?>"></script>
+    <script src="https://www.google.com/recaptcha/api.js?render=<?php echo defined('recaptchaSiteKey') ? recaptchaSiteKey : ''; ?>"></script>
 </head>
 
 <body background="images/ecardbackground.png">

@@ -49,7 +49,7 @@ if(useRecaptcha == '1') {
     <![endif]-->
 
     <!-- I am pulling in my site key from the config file -->
-    <script src="https://www.google.com/recaptcha/api.js?render=<?php echo captcha_site_key; ?>"></script>
+    <script src="https://www.google.com/recaptcha/api.js?render=<?php echo defined('recaptchaSiteKey') ? recaptchaSiteKey : ''; ?>"></script>
 
 
 
@@ -271,7 +271,7 @@ if(useRecaptcha == '1') {
 
 <script>
     grecaptcha.ready(function() {
-        grecaptcha.execute('<?php echo captcha_site_key; ?>', {action: 'homepage'}).then(function(token) {
+        grecaptcha.execute('<?php echo defined('recaptchaSiteKey') ? recaptchaSiteKey : ''; ?>', {action: 'homepage'}).then(function(token) {
         ...
         });
     });

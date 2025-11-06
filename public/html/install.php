@@ -24,7 +24,6 @@ if(!extension_loaded('curl')) {
 
 
 if(is_post_request()) {
-    pre($_POST);
     $barcodeprefix = substr($_POST['startbarcode'], 0, $_POST['barcodeprefix']);
     $providedConfig['library_name'] = $_POST['library_name'];
     $providedConfig['appserver_name'] = $_POST['appserver_name'];
@@ -50,7 +49,6 @@ if(is_post_request()) {
     $providedConfig['mailFrom'] = $_POST['mailFrom'];
 
     initializeConfigFile($providedConfig);
-    echo 'initialized the configuration';
     initializeBarcodeFile($_POST['startbarcode']);
 
     header('Location: index.php');
@@ -86,7 +84,7 @@ if(is_post_request()) {
     <![endif]-->
 
     <!-- I am pulling in my site key from the config file -->
-    <script src="https://www.google.com/recaptcha/api.js?render=<?php echo captcha_site_key; ?>"></script>
+    <script src="https://www.google.com/recaptcha/api.js?render=<?php echo defined('recaptchaSiteKey') ? recaptchaSiteKey : ''; ?>"></script>
 
         <script type="text/javascript">
             function populate(s1,s2){
@@ -363,7 +361,7 @@ if(is_post_request()) {
 
 <script>
     grecaptcha.ready(function() {
-        grecaptcha.execute('<?php echo captcha_site_key; ?>', {action: 'homepage'}).then(function(token) {
+        grecaptcha.execute('<?php echo defined('recaptchaSiteKey') ? recaptchaSiteKey : ''; ?>', {action: 'homepage'}).then(function(token) {
         ...
         });
     });
