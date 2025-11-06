@@ -59,6 +59,14 @@ define ('useGoogleAnalytics', '1');
 //Google analytics property ID.
 define ('googleAnalyticsID', 'YourGAPropertyID');
 
+// Enable demonstration mode to prevent patron records from being written to the ILS.
+// Set to 1 to enable demo mode.
+define('DEMO_MODE', '0');
+
+// Enable verbose debug output to assist with troubleshooting.
+// Set to 1 to print detailed DEBUG_MODE() output to the screen.
+define('DEBUG_MODE_ENABLED', '0');
+
 // to do address verification you need to be able to take the address provided by the patron and parse it to make sure it's correct and get more details
 // this code uses BING Maps to accomplish this.  Bing maps doesn't have a stellar interface for maps but their API is robust enough to accomplish what we need
 // furthermore its FREE!  You need to sign up for an API key with them and then go through the steps to say that you're a non-profit / public library.  They will

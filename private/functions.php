@@ -254,6 +254,83 @@ function pre($data) {
     print '<pre>' . print_r($data, true) . '</pre>';
 }
 
+function configFlagEnabled($value) {
+    if (is_bool($value)) {
+        return $value;
+    }
+
+    if (is_numeric($value)) {
+        return ((int)$value) !== 0;
+    }
+
+    if (is_string($value)) {
+        $normalized = strtolower(trim($value));
+
+        if ($normalized === '') {
+            return false;
+        }
+
+        if (is_numeric($normalized)) {
+            return ((int)$normalized) !== 0;
+        }
+
+        return in_array($normalized, ['true', 'yes', 'on', 'enable', 'enabled'], true);
+    }
+
+    return false;
+}
+
+function isDemoModeEnabled() {
+    return defined('DEMO_MODE') && configFlagEnabled(DEMO_MODE);
+}
+
+function isDebugModeEnabled() {
+    if (defined('DEBUG_MODE_ENABLED')) {
+        return configFlagEnabled(DEBUG_MODE_ENABLED);
+    }
+
+    if (defined('DEBUG_MODE')) {
+        return configFlagEnabled(DEBUG_MODE);
+    }
+
+    if (defined('debug_mode')) {
+        return configFlagEnabled(debug_mode);
+    }
+
+    return false;
+}
+
+function DEBUG_MODE($label, $data = null) {
+    if (!isDebugModeEnabled()) {
+        return;
+    }
+
+    $labelText = is_scalar($label) || $label === null
+        ? (string)$label
+        : json_encode($label);
+
+    echo '<div class="debug-output" style="background:#fefcf2;border:1px solid #f2d680;padding:10px;margin:10px 0;">';
+    echo '<strong>' . htmlspecialchars($labelText, ENT_QUOTES, 'UTF-8') . '</strong>';
+
+    if ($data !== null) {
+        if (is_array($data) || is_object($data)) {
+            $formatted = print_r($data, true);
+        } elseif (is_bool($data)) {
+            $formatted = $data ? 'true' : 'false';
+        } elseif ($data === '') {
+            $formatted = '[empty string]';
+        } elseif ($data === 0 || $data === 0.0) {
+            $formatted = '0';
+        } else {
+            $formatted = (string)$data;
+        }
+
+        echo '<pre style="margin:8px 0 0;white-space:pre-wrap;">' . htmlspecialchars($formatted, ENT_QUOTES, 'UTF-8') . '</pre>';
+    }
+
+    echo '</div>';
+}
+
 function stripped($fatId) {
   $lastSlash = strrpos($fatId, '/');
   $strippedId = substr($fatId, $lastSlash + 1, strlen($fatId));
@@ -3206,6 +3283,8 @@ function updatePatronPIN($patronID, $pin) {
 }
 
 function createOnlinePatron($patronArrayObj) {
+  DEBUG_MODE('createOnlinePatron() received data', $patronArrayObj);
+
   $randomPIN = generateRandomPIN(0,9,minimumPinLength);
   $newBarcode = getNextBarcode();
   $yearFromToday = strtotime('+1 year');
@@ -3218,9 +3297,6 @@ function createOnlinePatron($patronArrayObj) {
   $addressType = $patronArrayObj['addressType'];
   $phoneNumber = $patronArrayObj['phonenumber'];
   $numberType = $patronArrayObj['numberType'];
-  //$pin = substr($phoneNumber, -4,4);
-  //$barcode = $patronArrayObj['barcode'];
-  //$barcode = '21387001717764';  TEST CARD USED SO I DONT CHEW UP EXTRA CARDS IN MY CARD DB
   $expirationDate = $expirationString;
   $birthdate = $patronArrayObj['birthdate'];
 
@@ -3230,32 +3306,45 @@ function createOnlinePatron($patronArrayObj) {
   $uri .= apiVer;
   $uri .= '/patrons/';
 
-  $query_string ='{"emails": ["';
-  $query_string .=strip_tags($email);
-  $query_string .='"],"names": ["';
-  $query_string .=strip_tags($name);
-  $query_string .='"],"addresses":[{"lines": ["';
-  $query_string .= strip_tags($addressStreet);
-  $query_string .='", "';
-  $query_string .= strip_tags($citycommaProvince);
-  $query_string .= '", "';
-  $query_string .= strip_tags($postalCode);
-  $query_string .='"],"type": "';
-  $query_string .= strip_tags($addressType);
-  $query_string .= '"}],"phones": [{"number": "';
-  $query_string .= strip_tags($phoneNumber);
-  $query_string .= '","type": "';
-  $query_string .= strip_tags($numberType);
-  $query_string .= '"}],"pin": "';
-  $query_string .= $randomPIN;
-  $query_string .= '","barcodes": ["';
-  $query_string .= $newBarcode;
-  $query_string .= '"],"expirationDate": "';
-  $query_string .= strip_tags($expirationDate);
-  $query_string .='","birthDate": "';
-  $query_string .= strip_tags($birthdate);
-  $query_string .= '"}';
-  //echo $query_string;
+  $payloadPreview = [
+    'emails' => [strip_tags($email)],
+    'names' => [strip_tags($name)],
+    'addresses' => [[
+      'lines' => [
+        strip_tags($addressStreet),
+        strip_tags($citycommaProvince),
+        strip_tags($postalCode)
+      ],
+      'type' => strip_tags($addressType)
+    ]],
+    'phones' => [[
+      'number' => strip_tags($phoneNumber),
+      'type' => strip_tags($numberType)
+    ]],
+    'pin' => $randomPIN,
+    'barcodes' => [$newBarcode],
+    'expirationDate' => strip_tags($expirationDate),
+    'birthDate' => strip_tags($birthdate)
+  ];
+
+  $query_string = json_encode($payloadPreview);
+  DEBUG_MODE('createOnlinePatron() request payload', [
+    'uri' => $uri,
+    'body' => $payloadPreview
+  ]);
+
+  if (isDemoModeEnabled()) {
+    DEBUG_MODE('DEMO_MODE', 'DEMO_MODE is enabled. Patron creation request will not be sent.');
+
+    $newPatronInfo = array(
+      'patronIDString' => 'DEMO_MODE_ACTIVE',
+      'pin' => $randomPIN,
+      'barcode' => $newBarcode
+    );
+
+    DEBUG_MODE('createOnlinePatron() return payload (demo mode)', $newPatronInfo);
+    return $newPatronInfo;
+  }
 
   //setup the API access token
   setApiAccessToken();
@@ -3273,12 +3362,21 @@ function createOnlinePatron($patronArrayObj) {
   curl_setopt($ch, CURLOPT_POSTFIELDS, $query_string);
   curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
   $result = curl_exec($ch);
+  DEBUG_MODE('createOnlinePatron() raw API response', $result);
+
+  if (isDebugModeEnabled()) {
+    $decodedResult = json_decode($result, true);
+    if (json_last_error() === JSON_ERROR_NONE) {
+      DEBUG_MODE('createOnlinePatron() decoded API response', $decodedResult);
+    }
+  }
+
   curl_close($ch);
-  //return $result;
   $newPatronInfo = array(
     'patronIDString'=>$result,
     'pin'=>$randomPIN,
     'barcode'=>$newBarcode);
+  DEBUG_MODE('createOnlinePatron() return payload', $newPatronInfo);
   return $newPatronInfo;
   //$addressDetail = $currentAddress['lines'];
 

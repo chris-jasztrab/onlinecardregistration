@@ -113,26 +113,45 @@ $myAddress = [
          // the function makes a random pin with non-repeating numbers.
 
        $myNewPatron = createOnlinePatron($newPatronInfo);
+       DEBUG_MODE('createOnlinePatron() result', $myNewPatron);
+
       // get the pin from the patron record to display to the user
        $patronPIN = $myNewPatron['pin'];
-       // get the patronID from the record so we can get all the details.
-       $justpatronID = linkStripped($myNewPatron['patronIDString']);
-       //echo 'patron id string that was created is: ' . $justpatronID;
-       lb();
-       $allPatronDetails = getAllPatronDetails($justpatronID);
-       // legacy code
+       $barcodeForDisplay = $myNewPatron['barcode'];
 
-       // update the patron type to be 'Online-only'  we created this patron type in the ILS to have no access to physical resources.
-       $updatePatronType = updatePatronType($justpatronID, patronTypeNumber);
-       // update how they want notifications
-       $updateNoticePreference = updateNoticePreference($justpatronID, $patronData['notice_preference']);
-       // update their marketing preferences, we just use a patron note for this.
-       if($patronData['marketing_preference'] == 'y') {
-         $updateMarketingPreference = updatePatronNotes($justpatronID, 'MARKETING_PREFERENCE = TRUE');
-         }
-       $todaysDate = date('m/d/Y');
-       // add a patron note saying that the record was created using the online tool.
-        $addPatronCreateDate = updatePatronNotes($justpatronID, 'Created via MPL OnlinePatronCreationForm v1 on ' . $todaysDate);
+       if (isDemoModeEnabled()) {
+         DEBUG_MODE('DEMO_MODE', 'Skipping patron detail retrieval and update calls.');
+         $justpatronID = null;
+         $allPatronDetails = [
+           'barcodes' => [$barcodeForDisplay]
+         ];
+       } else {
+         // get the patronID from the record so we can get all the details.
+         $justpatronID = linkStripped($myNewPatron['patronIDString']);
+         DEBUG_MODE('Patron record identifier', $justpatronID);
+         //echo 'patron id string that was created is: ' . $justpatronID;
+         lb();
+         $allPatronDetails = getAllPatronDetails($justpatronID);
+         DEBUG_MODE('All patron details', $allPatronDetails);
+         // legacy code
+
+         // update the patron type to be 'Online-only'  we created this patron type in the ILS to have no access to physical resources.
+         $updatePatronType = updatePatronType($justpatronID, patronTypeNumber);
+         DEBUG_MODE('updatePatronType result', $updatePatronType);
+         // update how they want notifications
+         $updateNoticePreference = updateNoticePreference($justpatronID, $patronData['notice_preference']);
+         DEBUG_MODE('updateNoticePreference result', $updateNoticePreference);
+         // update their marketing preferences, we just use a patron note for this.
+         if($patronData['marketing_preference'] == 'y') {
+           $updateMarketingPreference = updatePatronNotes($justpatronID, 'MARKETING_PREFERENCE = TRUE');
+           DEBUG_MODE('updatePatronNotes (marketing preference) result', $updateMarketingPreference);
+           }
+         $todaysDate = date('m/d/Y');
+         // add a patron note saying that the record was created using the online tool.
+         $addPatronCreateDate = updatePatronNotes($justpatronID, 'Created via MPL OnlinePatronCreationForm v1 on ' . $todaysDate);
+         DEBUG_MODE('updatePatronNotes (creation note) result', $addPatronCreateDate);
+       }
+
 
 
  //pre($allPatronDetails);
@@ -142,6 +161,7 @@ $myAddress = [
 // the code below shows the image to the user on the screen and also emails them a copy of the card and our welcome email.
    createLibraryCardImage($allPatronDetails['barcodes']['0']);
    $libraryCardFile = $allPatronDetails['barcodes']['0'] . ".png";
+   DEBUG_MODE('Library card file generated', $libraryCardFile);
   ?>
 <html>
 <head>
