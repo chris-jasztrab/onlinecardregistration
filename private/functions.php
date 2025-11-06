@@ -1904,28 +1904,33 @@ function initializeConfigFile($providedConfig) {
 
     // File does ! not exist so create it and initialize it with the configuration provided.
     //echo 'file did not exist';
-    $library_name = "define('institutionName', '" . $providedConfig['library_name'] . "');";
-    $appserver_name = "define('appServer', '" . $providedConfig['appserver_name'] . "');";
-    $api_key = "define('apiKey', '" . $providedConfig['api_key'] . "');";
-    $api_secret = "define('apiSecret', '" . $providedConfig['api_secret'] . "');";
-    $api_ver = "define('apiVer', '" . $providedConfig['api_ver'] . "');";
-    $country = "define('localization', '" . $providedConfig['country'] . "');";
-    $pinlength = "define('minimumPinLength', '" . $providedConfig['pinlength'] . "');";
-    $startbarcode = "define('startingBarcodeNumber', '" . $providedConfig['startbarcode'] . "');";
-    $barcodeprefix = "define('barcodePrefix', '" . $providedConfig['barcodeprefix'] . "');";
-    $use_recaptcha = "define('useRecaptcha', '" . $providedConfig['use_recaptcha'] . "');";
-    $recaptcha_site = "define('recaptchaSiteKey', '" . $providedConfig['recaptcha_site'] . "');";
-    $recaptcha_secret = "define('recaptchaSecretKey', '" . $providedConfig['recaptcha_secret'] . "');";
-    $google_analytics = "define('useGoogleAnalytics', '" . $providedConfig['google_analytics'] . "');";
-    $ga_property = "define('googleAnalyticsID', '" . $providedConfig['ga_property'] . "');";
-    $address_verification = "define('verifyAddress', '" . $providedConfig['address_verification'] . "');";
-    $bing_key = "define('bingMapsKey', '" . $providedConfig['bing_key'] . "');";
-    $verify_catchment = "define('verifyCatchment', '" . $providedConfig['verify_catchment'] . "');";
-    $catchment_fail = "define('catchmentFailedRedirectPage', '" . $providedConfig['catchment_fail'] . "');";
-    $your_province = "define('yourprovince', '" . $providedConfig['yourprovince'] . "');";
-    $patronTypeNumber = "define('patronTypeNumber', '" . $providedConfig['patrontypenumber'] . "');";
-    $patronStatsSecret = "define('patronStatsSecret', '" . $providedConfig['patronStatsSecret'] . "');";
-    $mailFrom = "define('mailFrom', '" . $providedConfig['mailFrom'] . "');";
+    $buildDefine = function($name, $value) {
+      $sanitizedValue = ($value === null) ? '' : $value;
+      return "define('{$name}', " . var_export($sanitizedValue, true) . ");";
+    };
+
+    $library_name = $buildDefine('institutionName', $providedConfig['library_name']);
+    $appserver_name = $buildDefine('appServer', $providedConfig['appserver_name']);
+    $api_key = $buildDefine('apiKey', $providedConfig['api_key']);
+    $api_secret = $buildDefine('apiSecret', $providedConfig['api_secret']);
+    $api_ver = $buildDefine('apiVer', $providedConfig['api_ver']);
+    $country = $buildDefine('localization', $providedConfig['country']);
+    $pinlength = $buildDefine('minimumPinLength', $providedConfig['pinlength']);
+    $startbarcode = $buildDefine('startingBarcodeNumber', $providedConfig['startbarcode']);
+    $barcodeprefix = $buildDefine('barcodePrefix', $providedConfig['barcodeprefix']);
+    $use_recaptcha = $buildDefine('useRecaptcha', $providedConfig['use_recaptcha']);
+    $recaptcha_site = $buildDefine('recaptchaSiteKey', $providedConfig['recaptcha_site']);
+    $recaptcha_secret = $buildDefine('recaptchaSecretKey', $providedConfig['recaptcha_secret']);
+    $google_analytics = $buildDefine('useGoogleAnalytics', $providedConfig['google_analytics']);
+    $ga_property = $buildDefine('googleAnalyticsID', $providedConfig['ga_property']);
+    $address_verification = $buildDefine('verifyAddress', $providedConfig['address_verification']);
+    $bing_key = $buildDefine('bingMapsKey', $providedConfig['bing_key']);
+    $verify_catchment = $buildDefine('verifyCatchment', $providedConfig['verify_catchment']);
+    $catchment_fail = $buildDefine('catchmentFailedRedirectPage', $providedConfig['catchment_fail']);
+    $your_province = $buildDefine('yourprovince', $providedConfig['yourprovince']);
+    $patronTypeNumber = $buildDefine('patronTypeNumber', $providedConfig['patrontypenumber']);
+    $patronStatsSecret = $buildDefine('patronStatsSecret', $providedConfig['patronStatsSecret']);
+    $mailFrom = $buildDefine('mailFrom', $providedConfig['mailFrom']);
 
     $writefile = fopen('../../private/config.php', "w");
     if(!$writefile) { echo 'could not open file for writing'; }
