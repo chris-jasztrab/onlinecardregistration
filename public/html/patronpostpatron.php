@@ -12,89 +12,77 @@ use PHPMailer\PHPMailer\Exception;
 // again check to ensure people aren't going right to this page
 if(useRecaptcha == '1') {
     if (!isset($_SESSION['notabot'])) {
-        header('Location: \index.php');
+        redirect_to('index.php');
     }
 }
 
-// check if it's a post request, this page should only ever get post requests, if not kick them back to the start
+if (!is_post_request()) {
+    redirect_to('index.php');
+}
 
-// get all the POST details and do some formatting.  We like all uppercase in our patron records for instance.  This helps
-// keep patron records consistent.
+if (($_SESSION['about_to_post'] ?? '') !== 'TRUE') {
+    redirect_to('index.php');
+}
 
- if (!is_post_request()) {
-header('Location: \index.php');
- }
+$_SESSION['about_to_post'] = 'NULL';
 
- // this checks to see that they came from the verifypatron.php page. If not kick them back to the index page.
- if($_SESSION['about_to_post'] != 'TRUE') {
-     header('Location: \index.php');
- }
+$fieldMap = [
+    'email' => ['post' => 'email', 'session' => 'email'],
+    'first_name' => ['post' => 'fname', 'session' => 'first_name', 'uppercase' => true],
+    'last_name' => ['post' => 'lname', 'session' => 'last_name', 'uppercase' => true],
+    'street' => ['post' => 'street', 'session' => 'street', 'uppercase' => true],
+    'city' => ['post' => 'city', 'session' => 'city', 'uppercase' => true],
+    'province' => ['post' => 'province', 'session' => 'province', 'uppercase' => true],
+    'postalcode' => ['post' => 'postalcode', 'session' => 'postalcode', 'uppercase' => true],
+    'phone' => ['post' => 'phone', 'session' => 'phonenumber', 'uppercase' => true],
+    'date_of_birth' => ['post' => 'date_of_birth_field', 'session' => 'date_of_birth'],
+    'notice_preference' => ['post' => 'notice_preference', 'session' => 'notice_preference'],
+    'marketing_preference' => ['post' => 'marketing_preference', 'session' => 'marketing_preference'],
+];
 
- if($_SESSION['about_to_post'] == 'TRUE') {
-     if (is_post_request()) {
+$patronData = [];
+foreach ($fieldMap as $key => $config) {
+    $postKey = $config['post'];
+    $sessionKey = $config['session'];
+    $shouldUppercase = !empty($config['uppercase']);
 
-        $_SESSION['about_to_post'] = 'NULL';
-        if(isset($_POST['email']))
-          {
-              $post_email = $_POST['email'];
-              $post_name = strtoupper($_POST['lname']) . ', ' . strtoupper($_POST['fname']);
-              $post_street = strtoupper($_POST['street']);
-              $post_cityprovince = strtoupper($_POST['city']) . ', ' . strtoupper($_POST['province']);
-              $post_postalcode = strtoupper($_POST['postalcode']);
-              $post_phone = $_POST['phone'];
-              $post_bithdate = $_POST['date_of_birth_field'];
-              $post_city = strtoupper($_POST['city']);
-              $post_province = strtoupper($_POST['province']);
-              $post_notice = $_POST['notice_preference'];
-              $post_marketing = $_POST['marketing_preference'];
+    if (isset($_POST[$postKey])) {
+        $value = normalize_form_value($_POST[$postKey], $shouldUppercase);
+    } elseif (isset($_SESSION[$sessionKey])) {
+        $value = normalize_form_value($_SESSION[$sessionKey], $shouldUppercase);
+    } else {
+        $value = '';
+    }
 
-                // write the data to a session varibale, we might have to kick them back to the verify page and this will auto fill the data back in for them.
-              $_SESSION['email'] = $_POST['email'];
-              $_SESSION['first_name'] = strtoupper($_POST['fname']);
-              $_SESSION['last_name'] = strtoupper($_POST['lname']);
-              $_SESSION['name'] = strtoupper($_SESSION['last_name']) . ', ' . strtoupper($_SESSION['first_name']);
-              $_SESSION['street'] = strtoupper($_POST['street']);
-              $_SESSION['city'] = strtoupper($_POST['city']);
-              $_SESSION['postalcode'] = strtoupper($_POST['postalcode']);
-              $_SESSION['province'] = strtoupper($_POST['province']);
-              $_SESSION['phonenumber'] = strtoupper($_POST['phone']);
-              $_SESSION['date_of_birth'] = $_POST['date_of_birth_field'];
-              $_SESSION['notice_preference'] = $_POST['notice_preference'];
-              $_SESSION['marketing_preference'] = $_POST['marketing_preference'];
-          }
+    if ($key === 'postalcode') {
+        $value = fixPostalCode($value);
+    }
 
-      else {
-        $post_email = $_SESSION['email'];
-        $post_name = strtoupper($_SESSION['last_name']) . ', ' . strtoupper($_SESSION['first_name']);
-        $post_street = strtoupper($_SESSION['street']);
-        $post_cityprovince = strtoupper($_SESSION['city']) . ', ' . $_SESSION['province'];
-        $post_postalcode = strtoupper($_SESSION['postalcode']);
-        $post_phone = $_SESSION['phonenumber'];
-        $post_bithdate = $_SESSION['date_of_birth'];
-        $post_notice = $_SESSION['notice_preference'];
-        $post_marketing = $_SESSION['marketing_preference'];
-        $post_patrontype = $_SESSION['patron_type'];
-        $post_city = strtoupper($_SESSION['city']);
-        //$post_city =
-      }
-        // create an array of all the POST info that we will pass to a function that will add the patron to the ILS
-       $newPatronInfo = array(
-       'email'=>$post_email,
-       'name'=>$post_name,
-       'addressStreet'=>$post_street,
-       '$citycommaProvince'=>$post_cityprovince,
-       'postalCode'=>$post_postalcode,
-       'addressType'=>'a',
-       'phonenumber'=>$post_phone,
-       'numberType'=>'t',
-       'birthdate'=>$post_bithdate);
+    $patronData[$key] = $value;
+    $_SESSION[$sessionKey] = $value;
+}
 
-        // get their address into its own array - we will pass this to a function to do address verificaton.
-       $myAddress = [
-         'country' => 'CA',
-         'city' => $post_city,
-         'postalCode' => $post_postalcode,
-         'street' => $post_street];
+$_SESSION['name'] = $patronData['last_name'] . ', ' . $patronData['first_name'];
+$patronData['city_province'] = $patronData['city'] . ', ' . $patronData['province'];
+
+$newPatronInfo = [
+    'email' => $patronData['email'],
+    'name' => $_SESSION['name'],
+    'addressStreet' => $patronData['street'],
+    '$citycommaProvince' => $patronData['city_province'],
+    'postalCode' => $patronData['postalcode'],
+    'addressType' => 'a',
+    'phonenumber' => $patronData['phone'],
+    'numberType' => 't',
+    'birthdate' => $patronData['date_of_birth'],
+];
+
+$myAddress = [
+    'country' => getLocalizationCountryCode(),
+    'city' => $patronData['city'],
+    'postalCode' => $patronData['postalcode'],
+    'street' => $patronData['street'],
+];
 
        // leftover testing code.
     //echo $post_email;
@@ -109,16 +97,14 @@ header('Location: \index.php');
          if(!$addressCheck) {
             $_SESSION['addressissue'] = TRUE;
             // there was an issue with the address. Postal code did not match the provided address.  Redirect back and ask patron to correct
-             header('Location: verifynewpatron.php');
-             die();
+             redirect_to('verifynewpatron.php');
          }
        }
 
          if(verifyCatchment == '1') {
              // Patron address has been verified as an actual address.  check to see that they fall inside the catchment area.  IF they don't redirect to a page explaining card policy.
              if (!isPatronInsideCatchmentArea($myAddress)) {
-                 header('Location: ' . catchmentFailedRedirectPage); // set this to a url of a page that explains your policies on who can get a card.
-                 die();
+                 redirect_to(catchmentFailedRedirectPage); // set this to a url of a page that explains your policies on who can get a card.
              }
          }
 
@@ -139,17 +125,16 @@ header('Location: \index.php');
        // update the patron type to be 'Online-only'  we created this patron type in the ILS to have no access to physical resources.
        $updatePatronType = updatePatronType($justpatronID, patronTypeNumber);
        // update how they want notifications
-       $updateNoticePreference = updateNoticePreference($justpatronID, $post_notice);
+       $updateNoticePreference = updateNoticePreference($justpatronID, $patronData['notice_preference']);
        // update their marketing preferences, we just use a patron note for this.
-       if($post_marketing == 'y') {
+       if($patronData['marketing_preference'] == 'y') {
          $updateMarketingPreference = updatePatronNotes($justpatronID, 'MARKETING_PREFERENCE = TRUE');
          }
        $todaysDate = date('m/d/Y');
        // add a patron note saying that the record was created using the online tool.
-       $addPatronCreateDate = updatePatronNotes($justpatronID, 'Created via MPL OnlinePatronCreationForm v1 on ' . $todaysDate);
+        $addPatronCreateDate = updatePatronNotes($justpatronID, 'Created via MPL OnlinePatronCreationForm v1 on ' . $todaysDate);
 
-     }
- }
+
  //pre($allPatronDetails);
     // Code to create the library card image.  It takes a static image (the background of the library card) and superimposes a barcode ontop of it.
 
@@ -184,7 +169,7 @@ header('Location: \index.php');
     <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
 
-    <script src="https://www.google.com/recaptcha/api.js?render=<?php echo captcha_site_key; ?>"></script>
+    <script src="https://www.google.com/recaptcha/api.js?render=<?php echo defined('recaptchaSiteKey') ? recaptchaSiteKey : ''; ?>"></script>
 </head>
 
 <body background="images/ecardbackground.png">

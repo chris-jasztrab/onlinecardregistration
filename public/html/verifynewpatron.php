@@ -15,6 +15,16 @@ $_SESSION['about_to_post'] = 'TRUE';
 // check to see if a session variable exists first, if it doesn't them set it to the data posted from the form.php page
 // we do this because we use all session variables below to post the patron to the next page.  If there is an issue with their
 // applicaton we can auto fill in all the data back into the form from the session variables.
+$postalLabel = getPostalLabel();
+$postalPattern = getPostalPattern();
+$postalTitle = getPostalTitle();
+$subdivisionLabel = getSubdivisionLabel();
+$countryCode = getLocalizationCountryCode();
+$postalLabelWithHint = $postalLabel;
+if ($countryCode === 'CA') {
+    $postalLabelWithHint .= ' (A1A 1A1)';
+}
+$selectedProvince = $_SESSION['province'] ?? '';
 if(!isset($_SESSION['last_name'])) $_SESSION['last_name'] = trim(strtoupper($_POST['last_name']));
 if(!isset($_SESSION['first_name'])) $_SESSION['first_name'] = trim(strtoupper($_POST['first_name']));
 if(!isset($_SESSION['date_of_birth'])) $_SESSION['date_of_birth'] = $_POST['date_of_birth'];
@@ -105,112 +115,19 @@ if(!isset($_SESSION['notice_preference'])) $_SESSION['notice_preference'] = $_PO
                 <input type="text" name="city" placeholder="" id="city" style="margin-bottom: 10px" value="<?php echo $_SESSION['city'];?>" required/>
 
 
-                <div class="form_labels"><?php if(localization == 'CA') { ?>Postal Code (A1A 1A1)<?php } ?><?php if(localization == 'US') { ?>Zip Code<?php } ?></div>
+                <div class="form_labels"><?php echo htmlspecialchars($postalLabelWithHint, ENT_QUOTES, 'UTF-8'); ?></div>
                 <input type="text"
                        name="postalcode"
                        placeholder="" id="postalcode"
-                       <?php if(localization == 'CA') { ?>pattern="[A-Za-z][0-9][A-Za-z] [0-9][A-Za-z][0-9]"<?php } ?>
-                       <?php if(localization == 'US') { ?>pattern="(\d{5}([\-]\d{4})?)"<?php } ?>
+                       pattern="<?php echo htmlspecialchars($postalPattern, ENT_QUOTES, 'UTF-8'); ?>"
+                       title="<?php echo htmlspecialchars($postalTitle, ENT_QUOTES, 'UTF-8'); ?>"
                        style="margin-bottom: 10px"
                        value="<?php echo $_SESSION['postalcode'];?>" required/>
 
 
-                <div class="form_labels"><?php if(localization == 'CA') { ?> Province <?php } ?> <?php if(localization == 'US') { ?> State <?php } ?>  </div>
-                <select class="form-control input-small" name="province" style="height: 50px;" autocomplete="mpl_province_v1.0" id="province" style="margin-bottom: 10px" required/>
-                <?php if(localization == 'CA') { ?>
-                   <option value="AB"<?php
-                   if($_SESSION['province'] === 'AB') {
-                   echo "selected";}?>>Alberta</option>
-                   <option value="BC"<?php
-                   if($_SESSION['province'] === 'BC') {
-                   echo "selected";}?>>British Columbia</option>
-                   <option value="MB"<?php
-                   if($_SESSION['province'] === 'MB') {
-                   echo "selected";}?>>Manitoba</option>
-                   <option value="NB"<?php
-                   if($_SESSION['province'] === 'NB') {
-                   echo "selected";}?>>New Brunswick</option>
-                   <option value="NL"<?php
-                   if($_SESSION['province'] === 'NL') {
-                   echo "selected";}?>>Newfoundland and Labrador</option>
-                   <option value="NT"<?php
-                   if($_SESSION['province'] === 'NT') {
-                   echo "selected";}?>>Northwest Territories</option>
-                   <option value="NS"<?php
-                   if($_SESSION['province'] === 'NS') {
-                   echo "selected";}?>>Nova Scotia</option>
-                   <option value="NU"<?php
-                   if($_SESSION['province'] === 'NU') {
-                   echo "selected";}?>>Nunavut</option>
-                   <option value="ON"<?php
-                   if($_SESSION['province'] === 'ON') {
-                   echo "selected";}?>>Ontario</option>
-                   <option value="PE"<?php
-                   if($_SESSION['province'] === 'PE') {
-                   echo "selected";}?>>Prince Edward Island</option>
-                   <option value="QC"<?php
-                   if($_SESSION['province'] === 'QC') {
-                   echo "selected";}?>>Quebec</option>
-                   <option value="SK"<?php
-                   if($_SESSION['province'] === 'SK') {
-                   echo "selected";}?>>Saskatchewan</option>
-                   <option value="YT"<?php
-                   if($_SESSION['province'] === 'YT') {
-                   echo "selected";}?>>Yukon</option>
-                <?php } ?>
-                <?php if(localization == 'US') { ?>
-                    <option value="AL"<?php if($_SESSION['province'] === 'AL') {echo "selected";}?>>Alabama</option>
-                    <option value="AK"<?php if($_SESSION['province'] === 'AK') {echo "selected";}?>>Alaska</option>
-                    <option value="AZ"<?php if($_SESSION['province'] === 'AZ') {echo "selected";}?>>Arizona</option>
-                    <option value="AR"<?php if($_SESSION['province'] === 'AR') {echo "selected";}?>>Arkansas</option>
-                    <option value="CA"<?php if($_SESSION['province'] === 'CA') {echo "selected";}?>>California</option>
-                    <option value="CO"<?php if($_SESSION['province'] === 'CO') {echo "selected";}?>>Colorado</option>
-                    <option value="CT"<?php if($_SESSION['province'] === 'CT') {echo "selected";}?>>Connecticut</option>
-                    <option value="DE"<?php if($_SESSION['province'] === 'DE') {echo "selected";}?>>Delaware</option>
-                    <option value="DC"<?php if($_SESSION['province'] === 'DC') {echo "selected";}?>>District Of Columbia</option>
-                    <option value="FL"<?php if($_SESSION['province'] === 'FL') {echo "selected";}?>>Florida</option>
-                    <option value="GA"<?php if($_SESSION['province'] === 'GA') {echo "selected";}?>>Georgia</option>
-                    <option value="HI"<?php if($_SESSION['province'] === 'HI') {echo "selected";}?>>Hawaii</option>
-                    <option value="ID"<?php if($_SESSION['province'] === 'ID') {echo "selected";}?>>Idaho</option>
-                    <option value="IL"<?php if($_SESSION['province'] === 'IL') {echo "selected";}?>>Illinois</option>
-                    <option value="IN"<?php if($_SESSION['province'] === 'IN') {echo "selected";}?>>Indiana</option>
-                    <option value="IA"<?php if($_SESSION['province'] === 'IA') {echo "selected";}?>>Iowa</option>
-                    <option value="KS"<?php if($_SESSION['province'] === 'KS') {echo "selected";}?>>Kansas</option>
-                    <option value="KY"<?php if($_SESSION['province'] === 'KY') {echo "selected";}?>>Kentucky</option>
-                    <option value="LA"<?php if($_SESSION['province'] === 'LA') {echo "selected";}?>>Louisiana</option>
-                    <option value="ME"<?php if($_SESSION['province'] === 'ME') {echo "selected";}?>>Maine</option>
-                    <option value="MD"<?php if($_SESSION['province'] === 'MD') {echo "selected";}?>>Maryland</option>
-                    <option value="MA"<?php if($_SESSION['province'] === 'MA') {echo "selected";}?>>Massachusetts</option>
-                    <option value="MI"<?php if($_SESSION['province'] === 'MI') {echo "selected";}?>>Michigan</option>
-                    <option value="MN"<?php if($_SESSION['province'] === 'MN') {echo "selected";}?>>Minnesota</option>
-                    <option value="MS"<?php if($_SESSION['province'] === 'MS') {echo "selected";}?>>Mississippi</option>
-                    <option value="MO"<?php if($_SESSION['province'] === 'MO') {echo "selected";}?>>Missouri</option>
-                    <option value="MT"<?php if($_SESSION['province'] === 'MT') {echo "selected";}?>>Montana</option>
-                    <option value="NE"<?php if($_SESSION['province'] === 'NE') {echo "selected";}?>>Nebraska</option>
-                    <option value="NV"<?php if($_SESSION['province'] === 'NV') {echo "selected";}?>>Nevada</option>
-                    <option value="NH"<?php if($_SESSION['province'] === 'NH') {echo "selected";}?>>New Hampshire</option>
-                    <option value="NJ"<?php if($_SESSION['province'] === 'NJ') {echo "selected";}?>>New Jersey</option>
-                    <option value="NM"<?php if($_SESSION['province'] === 'NM') {echo "selected";}?>>New Mexico</option>
-                    <option value="NY"<?php if($_SESSION['province'] === 'NY') {echo "selected";}?>>New York</option>
-                    <option value="NC"<?php if($_SESSION['province'] === 'NC') {echo "selected";}?>>North Carolina</option>
-                    <option value="ND"<?php if($_SESSION['province'] === 'ND') {echo "selected";}?>>North Dakota</option>
-                    <option value="OH"<?php if($_SESSION['province'] === 'OH') {echo "selected";}?>>Ohio</option>
-                    <option value="OK"<?php if($_SESSION['province'] === 'OK') {echo "selected";}?>>Oklahoma</option>
-                    <option value="OR"<?php if($_SESSION['province'] === 'OR') {echo "selected";}?>>Oregon</option>
-                    <option value="PA"<?php if($_SESSION['province'] === 'PA') {echo "selected";}?>>Pennsylvania</option>
-                    <option value="RI"<?php if($_SESSION['province'] === 'RI') {echo "selected";}?>>Rhode Island</option>
-                    <option value="SC"<?php if($_SESSION['province'] === 'SC') {echo "selected";}?>>South Carolina</option>
-                    <option value="SD"<?php if($_SESSION['province'] === 'SD') {echo "selected";}?>>South Dakota</option>
-                    <option value="TN"<?php if($_SESSION['province'] === 'TN') {echo "selected";}?>>Tennessee</option>
-                    <option value="TX"<?php if($_SESSION['province'] === 'TX') {echo "selected";}?>>Texas</option>
-                    <option value="UT"<?php if($_SESSION['province'] === 'UT') {echo "selected";}?>>Utah</option>
-                    <option value="VT"<?php if($_SESSION['province'] === 'VT') {echo "selected";}?>>Vermont</option>
-                    <option value="VA"<?php if($_SESSION['province'] === 'VA') {echo "selected";}?>>Virginia</option>
-                    <option value="WA"<?php if($_SESSION['province'] === 'WA') {echo "selected";}?>>Washington</option>
-                    <option value="WV"<?php if($_SESSION['province'] === 'WV') {echo "selected";}?>>West Virginia</option>
-                    <option value="WI"<?php if($_SESSION['province'] === 'WI') {echo "selected";}?>>Wisconsin</option>
-                    <option value="WY"<?php if($_SESSION['province'] === 'WY') {echo "selected";}?>>Wyoming</option>
-                <?php } ?>
+                <div class="form_labels"><?php echo htmlspecialchars($subdivisionLabel, ENT_QUOTES, 'UTF-8'); ?>  </div>
+                <select class="form-control input-small" name="province" style="height: 50px;" autocomplete="mpl_province_v1.0" id="province" style="margin-bottom: 10px" required>
+                    <?php echo renderSubdivisionOptions($selectedProvince); ?>
                 </select>
 
                 <h2 class="fs-title">Contact Information</h2>
